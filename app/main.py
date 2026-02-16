@@ -1,44 +1,36 @@
 from fastapi import FastAPI
 import os
-import openai
+from openai import OpenAI
 
 app = FastAPI()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.get("/health")
 def health():
-    return {"status": "great"}
+    return {"status": "ok"}
 
 @app.get("/explain-wine")
-def explain_wine(
-    name: str,
-    region: str = "",
-    grape: str = "",
-    vintage: str = ""
-):
+def explain_wine(name: str):
     prompt = f"""
-Explain this wine in simple terms.
+Explain this wine in simple terms:
 
-Wine name: {name}
-Region: {region}
-Grape: {grape}
-Vintage: {vintage}
+{name}
 
 Describe:
 - Likely flavor profile
 - Body and acidity
-- What kind of person might enjoy it
+- Who might enjoy it
 """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
         messages=[
             {"role": "user", "content": prompt}
         ]
     )
 
-    explanation = response["choices"][0]["message"]["content"]
+    explanation = response.choices[0].message.content
 
     return {
         "wine": name,
