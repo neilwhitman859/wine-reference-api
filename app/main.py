@@ -8,7 +8,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "great"}
 
 @app.get("/explain-wine")
 def explain_wine(
