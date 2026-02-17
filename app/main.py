@@ -6,7 +6,7 @@ app = FastAPI()
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "2026-02-17a"}
+    return {"status": "ok", "version": "2026-02-17 939"}
 
 
 @app.get("/explain-wine")
