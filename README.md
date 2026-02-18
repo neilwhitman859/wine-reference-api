@@ -2,6 +2,8 @@
 
 Simple FastAPI app that provides AI-generated wine overviews.
 
+For AI agent and contributor workflow, see AGENT_WORKFLOW.md
+
 ## Endpoints
 
 - `GET /` — basic web UI for entering a wine and optional vintage.
