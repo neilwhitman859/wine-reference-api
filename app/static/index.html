@@ -75,11 +75,81 @@
       .result {
         margin-top: 16px;
         line-height: 1.55;
-        background: #f9f7f6;
-        border: 1px solid #e6dfdc;
+        background: linear-gradient(180deg, #fff 0%, #fdf9f7 100%);
+        border: 1px solid #e4dad5;
+        border-radius: 10px;
+        padding: 18px;
+        min-height: 90px;
+      }
+      .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 10px;
+      }
+      .hero h2 {
+        margin: 0;
+      }
+      .hero p {
+        margin: 6px 0 0;
+      }
+      .pill {
+        display: inline-block;
+        margin-top: 8px;
+        background: #f5ece8;
+        color: #5f2932;
+        border: 1px solid #e7d8d2;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .score-wrap {
+        text-align: right;
+        min-width: 180px;
+      }
+      .score {
+        font-size: 32px;
+        line-height: 1;
+        font-weight: 700;
+        color: #7a2538;
+      }
+      .score-label {
+        font-size: 12px;
+        color: #6e5d59;
+      }
+      .section {
+        border: 1px solid #eadfda;
+        background: #fff;
         border-radius: 10px;
         padding: 14px;
-        min-height: 90px;
+        margin-top: 14px;
+      }
+      .section h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+      .kpi-grid {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .kpi {
+        background: #fcf7f4;
+        border: 1px solid #ecdcd5;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .kpi-label {
+        font-size: 12px;
+        color: #6e5d59;
+      }
+      .kpi-value {
+        font-size: 16px;
+        font-weight: 700;
+        margin-top: 2px;
       }
       .result h2,
       .result h3 {
@@ -138,6 +208,15 @@
       }
       @media (max-width: 760px) {
         .grid {
+          grid-template-columns: 1fr;
+        }
+        .hero {
+          flex-direction: column;
+        }
+        .score-wrap {
+          text-align: left;
+        }
+        .kpi-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -254,6 +333,80 @@
           .join("");
       };
 
+      const parseGrapeComposition = (text = "") => {
+        if (!text) {
+          return [];
+        }
+        const matches = [...text.matchAll(/(\d{1,3})\s?%\s*([A-Za-z][A-Za-z\s\-]+)/g)];
+        return matches
+          .map((match) => ({
+            percent: Number(match[1]),
+            grape: (match[2] || "").trim().replace(/[.,;:]$/, ""),
+          }))
+          .filter((item) => item.percent > 0 && item.percent <= 100 && item.grape.length);
+      };
+
+      const formatCurrency = (value) =>
+        new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+
+      const buildWeatherVintageScore = (weather = {}, vintageYear = null) => {
+        if (!vintageYear || !weather.selected_vintage || !weather.selected_vs_average_comparison) {
+          return { score: null, note: "No vintage year selected, so weather score is unavailable." };
+        }
+
+        const comp = weather.selected_vs_average_comparison;
+        const rainDelta = Math.abs(comp.rain_total_vs_avg_delta_mm || 0);
+        const avgHighDelta = Math.abs(comp.avg_high_vs_avg_high_delta_c || 0);
+        const avgLowDelta = Math.abs(comp.avg_low_vs_avg_low_delta_c || 0);
+        const rainyDaysDelta = Math.abs(comp.rainy_days_vs_avg_delta || 0);
+
+        let score = 5;
+        if (rainDelta > 70 || avgHighDelta > 2.7 || avgLowDelta > 2.5 || rainyDaysDelta > 10) {
+          score = 2;
+        } else if (rainDelta > 45 || avgHighDelta > 1.9 || avgLowDelta > 1.7 || rainyDaysDelta > 7) {
+          score = 3;
+        } else if (rainDelta > 28 || avgHighDelta > 1.1 || avgLowDelta > 1.1 || rainyDaysDelta > 4) {
+          score = 4;
+        }
+
+        return {
+          score,
+          note:
+            score >= 4
+              ? "Weather in this growing season tracked fairly close to regional norms and likely supports consistent quality."
+              : "This vintage saw meaningful weather deviations from a typical year, which can introduce more variability in quality.",
+        };
+      };
+
+      const estimateCurrentValue = (score, vintageYear = null) => {
+        const currentYear = new Date().getFullYear();
+        const age = vintageYear ? Math.max(currentYear - vintageYear, 0) : 6;
+        const weatherMultiplier = score ? 0.85 + score * 0.11 : 1;
+        const maturityMultiplier = 1 + Math.min(age / 20, 1.4) * 0.5;
+        const estimatedValue = 55 * weatherMultiplier * maturityMultiplier;
+        return Math.max(28, Math.round(estimatedValue));
+      };
+
+      const weatherSummaryText = (weather = {}, vintageYear = null) => {
+        if (!weather || weather.error || !weather.selected_vintage || !weather.selected_vs_average_comparison) {
+          return weather?.error || "No weather comparison is available for this wine yet.";
+        }
+
+        const comp = weather.selected_vs_average_comparison;
+        const highDelta = comp.avg_high_vs_avg_high_delta_c || 0;
+        const rainDelta = comp.rain_total_vs_avg_delta_mm || 0;
+        const rainyDaysDelta = comp.rainy_days_vs_avg_delta || 0;
+
+        const tempDirection = highDelta >= 0 ? "warmer" : "cooler";
+        const rainDirection = rainDelta >= 0 ? "wetter" : "drier";
+        const rainyDaysDirection = rainyDaysDelta >= 0 ? "more rainy days" : "fewer rainy days";
+
+        return `${vintageYear} was about ${safeNumber(Math.abs(highDelta), 1)}°C ${tempDirection} than a typical growing season, ${safeNumber(
+          Math.abs(rainDelta),
+          1,
+        )} mm ${rainDirection}, and had ${safeNumber(Math.abs(rainyDaysDelta), 1)} ${rainyDaysDirection}.`;
+      };
+
       const weatherComparisonSummary = (weather = {}, vintageYear = null) => {
         if (!weather || weather.error) {
           return `<p>${weather?.error || "No growing season weather data available."}</p>`;
@@ -281,22 +434,62 @@
         const drinking = breakdown.drinking_experience || {};
         const vintageIntel = data.vintage_intelligence || {};
         const weather = data.growing_season_weather || {};
+        const grapeComposition = parseGrapeComposition(breakdown.grape_composition_and_style || "");
+        const grapeCompositionTop = grapeComposition.length
+          ? grapeComposition.map((item) => `<li><strong>${item.percent}%</strong> ${item.grape}</li>`).join("")
+          : "<li>No explicit grape percentages were returned.</li>";
+        const weatherScore = buildWeatherVintageScore(weather, data.vintage);
+        const estimatedValue = formatCurrency(estimateCurrentValue(weatherScore.score, data.vintage));
 
         return `
-          <h2>${title}</h2>
-          <p>${data.summary || "No summary returned."}</p>
+          <div class="hero">
+            <div>
+              <h2>${title}</h2>
+              <p>${data.summary || "No summary returned."}</p>
+              <span class="pill">Estimated current value: ${estimatedValue}</span>
+            </div>
+            <div class="score-wrap">
+              <div class="score">${weatherScore.score ? `${weatherScore.score}/5` : "N/A"}</div>
+              <div class="score-label">Vintage weather score</div>
+            </div>
+          </div>
 
-          <h3>Description breakdown</h3>
-          <p><strong>Producer & region:</strong> ${breakdown.producer_and_region || "N/A"}</p>
-          <p><strong>Grapes & style:</strong> ${breakdown.grape_composition_and_style || "N/A"}</p>
+          <div class="section">
+            <h3>At-a-glance</h3>
+            <div class="kpi-grid">
+              <div class="kpi">
+                <div class="kpi-label">Producer & region</div>
+                <div class="kpi-value">${breakdown.producer_and_region || "N/A"}</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">Weather vs typical year</div>
+                <div class="kpi-value">${weatherSummaryText(weather, data.vintage)}</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">Vintage read</div>
+                <div class="kpi-value">${vintageIntel.selected_vintage_assessment || "N/A"}</div>
+              </div>
+            </div>
+          </div>
 
-          <h3>Tasting profile</h3>
+          <div class="section">
+            <h3>Grape composition</h3>
+            <ul>${grapeCompositionTop}</ul>
+            <p><strong>Style note:</strong> ${breakdown.grape_composition_and_style || "N/A"}</p>
+          </div>
+
+          <div class="section">
+            <h3>Tasting profile</h3>
           <p><strong>Aroma</strong></p>
           <ul>${listItems(tasting.aroma || [])}</ul>
           <p><strong>Palate</strong></p>
           <ul>${listItems(tasting.palate || [])}</ul>
           <p><strong>Finish:</strong> ${tasting.finish || "N/A"}</p>
 
+          <p><strong>Weather-driven quality note:</strong> ${weatherScore.note}</p>
+          </div>
+
+          <div class="section">
           <h3>Drinking experience</h3>
           <ul>
             <li><strong>Body:</strong> ${drinking.body || "N/A"}</li>
@@ -308,19 +501,26 @@
           </ul>
           <p><strong>Food pairings</strong></p>
           <ul>${listItems(drinking.food_pairings || [])}</ul>
+          </div>
 
+          <div class="section">
           <h3>Vintage intelligence</h3>
           <p><strong>Assessment:</strong> ${vintageIntel.selected_vintage_assessment || "N/A"}</p>
           <p><strong>Comparison:</strong> ${vintageIntel.comparison_to_adjacent_vintages || "N/A"}</p>
           <p><strong>Buying guidance:</strong> ${vintageIntel.buying_guidance || "N/A"}</p>
           <p><strong>Weather patterns</strong></p>
           <ul>${weatherRows(vintageIntel.weather_patterns || [])}</ul>
+          </div>
 
+          <div class="section">
           <h3>Uncertainty notes</h3>
           <ul>${listItems(data.uncertainty_notes || ["None provided."])}</ul>
+          </div>
 
+          <div class="section">
           <h3>Growing season weather benchmark (Open-Meteo)</h3>
           ${weatherComparisonSummary(weather, data.vintage)}
+          </div>
         `;
       };
 
