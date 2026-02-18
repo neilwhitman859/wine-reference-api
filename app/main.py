@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional
+from datetime import datetime, timezone
 import os
 
 from fastapi import FastAPI, HTTPException
@@ -18,7 +19,11 @@ def home():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "2026-02-18 001"}
+    return {
+        "status": "ok",
+        "version": "2026-02-18 001",
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @app.get("/explain-wine")
