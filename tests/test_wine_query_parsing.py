@@ -60,6 +60,7 @@ class WineQueryParsingTests(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["wine"], "Tondonia")
         self.assertEqual(payload["vintage"], 2008)
+        self.assertIn("growing_season_weather", payload)
         self.assertIn("- Bottle: Tondonia", _FakeOpenAI.last_input)
         self.assertIn("- Selected vintage: 2008", _FakeOpenAI.last_input)
 
@@ -73,6 +74,7 @@ class WineQueryParsingTests(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["wine"], "Fort Ross Top of Land")
         self.assertEqual(payload["vintage"], 2020)
+        self.assertIn("growing_season_weather", payload)
         self.assertIn("- Bottle: Fort Ross Top of Land", _FakeOpenAI.last_input)
         self.assertIn("- Selected vintage: 2020", _FakeOpenAI.last_input)
 
