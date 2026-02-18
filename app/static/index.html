@@ -99,6 +99,43 @@
         border-radius: 4px;
         padding: 0 4px;
       }
+      .weather-viz {
+        margin-top: 12px;
+        border: 1px solid #e0d8d4;
+        border-radius: 8px;
+        padding: 12px;
+        background: #fff;
+      }
+      .metric-row {
+        margin-bottom: 12px;
+      }
+      .metric-row:last-child {
+        margin-bottom: 0;
+      }
+      .metric-row-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        margin-bottom: 5px;
+      }
+      .bar-track {
+        height: 14px;
+        border-radius: 999px;
+        background: #f0e9e5;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .bar {
+        height: 100%;
+      }
+      .bar.avg {
+        background: #c5b8b2;
+      }
+      .bar.vintage {
+        background: #7a2538;
+      }
       @media (max-width: 760px) {
         .grid {
           grid-template-columns: 1fr;
@@ -168,12 +205,82 @@
           .join("");
       };
 
+      const safeNumber = (value, digits = 2) => {
+        if (typeof value !== "number" || Number.isNaN(value)) {
+          return "N/A";
+        }
+        return value.toFixed(digits);
+      };
+
+      const metricVizRows = (weather = {}, vintageYear = null) => {
+        const averageYear = weather.all_years_average || {};
+        const selected = weather.selected_vintage || {};
+        if (!vintageYear || !weather.selected_vintage) {
+          return "<p>No selected vintage weather baseline comparison is available.</p>";
+        }
+
+        const rows = [
+          { key: "avg_high_c", label: "Growing-season average high (°C)", digits: 2 },
+          { key: "max_high_c", label: "Peak high during season (°C)", digits: 2 },
+          { key: "avg_low_c", label: "Growing-season average low (°C)", digits: 2 },
+          { key: "min_low_c", label: "Lowest low during season (°C)", digits: 2 },
+          { key: "rain_total_mm", label: "Growing-season rain total (mm)", digits: 1 },
+          { key: "rainy_days", label: "Growing-season rainy days", digits: 1 },
+        ];
+
+        return rows
+          .map((row) => {
+            const avg = averageYear[row.key];
+            const vin = selected[row.key];
+            if (typeof avg !== "number" || typeof vin !== "number") {
+              return "";
+            }
+            const scale = Math.max(avg, vin, 1);
+            const avgWidth = Math.max((avg / scale) * 100, 3);
+            const vintageWidth = Math.max((vin / scale) * 100, 3);
+            return `
+              <div class="metric-row">
+                <div class="metric-row-header">
+                  <strong>${row.label}</strong>
+                  <span>${vintageYear}: ${safeNumber(vin, row.digits)} | Avg year: ${safeNumber(avg, row.digits)}</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar avg" style="width:${avgWidth}%"></div>
+                  <div class="bar vintage" style="width:${vintageWidth}%"></div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      };
+
+      const weatherComparisonSummary = (weather = {}, vintageYear = null) => {
+        if (!weather || weather.error) {
+          return `<p>${weather?.error || "No growing season weather data available."}</p>`;
+        }
+
+        const comp = weather.selected_vs_average_comparison || {};
+        const maxHighVsAvgHigh = safeNumber(comp.max_high_vs_avg_high_delta_c, 2);
+        const minLowVsAvgLow = safeNumber(comp.min_low_vs_avg_low_delta_c, 2);
+
+        return `
+          <p><strong>Region:</strong> ${weather.region || "N/A"}</p>
+          <p><strong>Open-Meteo baseline years:</strong> ${weather.all_years_period?.start_year || "N/A"} to ${weather.all_years_period?.end_year || "N/A"}</p>
+          <p><strong>${vintageYear || "Vintage"} peak-high vs average-year average-high:</strong> ${maxHighVsAvgHigh}°C</p>
+          <p><strong>${vintageYear || "Vintage"} lowest-low vs average-year average-low:</strong> ${minLowVsAvgLow}°C</p>
+          <div class="weather-viz">
+            ${metricVizRows(weather, vintageYear)}
+          </div>
+        `;
+      };
+
       const renderResult = (data) => {
         const title = data.vintage ? `${data.wine} (${data.vintage})` : data.wine;
         const breakdown = data.description_breakdown || {};
         const tasting = breakdown.tasting_profile || {};
         const drinking = breakdown.drinking_experience || {};
         const vintageIntel = data.vintage_intelligence || {};
+        const weather = data.growing_season_weather || {};
 
         return `
           <h2>${title}</h2>
@@ -211,6 +318,9 @@
 
           <h3>Uncertainty notes</h3>
           <ul>${listItems(data.uncertainty_notes || ["None provided."])}</ul>
+
+          <h3>Growing season weather benchmark (Open-Meteo)</h3>
+          ${weatherComparisonSummary(weather, data.vintage)}
         `;
       };
 
