@@ -15,13 +15,14 @@ def home():
     return FileResponse(BASE_DIR / "static" / "index.html")
 
 
+
 @app.get("/health")
 def health():
     return {"status": "ok", "version": "2026-02-18 001"}
 
 
 @app.get("/explain-wine")
-def explain_wine(name: str, vintage: Optional[int] = None):
+def explain_wine(name: str, vintage: int):
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(
@@ -31,32 +32,7 @@ def explain_wine(name: str, vintage: Optional[int] = None):
 
     client = OpenAI(api_key=api_key)
 
-    if vintage is None:
-        prompt = f"""You are a professional sommelier.
-
-Provide a detailed but approachable overview of this wine:
-- Bottle: {name}
-
-Format your response with clear section headings and include:
-1. Wine Overview
-   - Producer and region context
-   - Grape composition (if known) and style
-   - Typical tasting notes (aroma, palate, finish)
-2. Drinking Experience
-   - Body, acidity, tannin, alcohol impression
-   - Food pairing suggestions
-   - Cellaring/serving guidance
-3. Vintage Notes
-   - Mention notable good and weaker vintages generally associated with this bottle/winery
-   - Explain how vintage variation typically affects style and quality
-4. Buying Guidance
-   - What type of drinker this wine suits
-   - Relative value and when to drink
-
-If exact historical data is uncertain, state assumptions clearly and avoid fabrication.
-"""
-    else:
-        prompt = f"""You are a professional sommelier.
+    prompt = f"""You are a professional sommelier.
 
 Provide a detailed but approachable overview of this wine:
 - Bottle: {name}
