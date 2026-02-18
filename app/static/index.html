@@ -82,6 +82,11 @@
         padding: 14px;
         min-height: 90px;
       }
+      .meta {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #6e5d59;
+      }
       @media (max-width: 760px) {
         .grid {
           grid-template-columns: 1fr;
@@ -114,6 +119,7 @@
 
         <div id="status" class="status"></div>
         <div id="result" class="result">Your wine overview will appear here.</div>
+        <div class="meta">Last updated: <time id="last-updated"></time></div>
       </section>
     </main>
 
@@ -122,6 +128,11 @@
       const statusEl = document.getElementById("status");
       const resultEl = document.getElementById("result");
       const submitBtn = document.getElementById("submit-btn");
+      const lastUpdatedEl = document.getElementById("last-updated");
+
+      const formattedUpdatedAt = new Date(document.lastModified).toLocaleString();
+      lastUpdatedEl.textContent = formattedUpdatedAt;
+      lastUpdatedEl.dateTime = new Date(document.lastModified).toISOString();
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
