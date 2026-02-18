@@ -20,3 +20,4 @@ Then open http://127.0.0.1:8000 in your browser.
 ## Environment variables
 
 - `OPENAI_API_KEY` (required for `/explain-wine`)
+# codespace test
