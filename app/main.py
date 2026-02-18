@@ -3,6 +3,7 @@ from typing import Any, Optional
 from datetime import datetime, timezone
 import json
 import os
+import re
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -64,14 +65,17 @@ def explain_wine(name: str, vintage: Optional[int] = None):
 
     client = OpenAI(api_key=api_key)
 
+    parsed_name, parsed_vintage = _normalize_wine_query(name=name, vintage=vintage)
     vintage_context = (
-        f"Selected vintage: {vintage}" if vintage else "No specific vintage selected"
+        f"Selected vintage: {parsed_vintage}"
+        if parsed_vintage
+        else "No specific vintage selected"
     )
 
     prompt = f"""You are a professional sommelier and wine market analyst.
 
 Provide a detailed JSON response for this wine:
-- Bottle: {name}
+- Bottle: {parsed_name}
 - {vintage_context}
 
 Requirements:
@@ -126,11 +130,16 @@ Use this exact JSON shape:
             input=prompt,
         )
         raw_output = resp.output_text
+        if not raw_output:
+            raise HTTPException(
+                status_code=500,
+                detail="OpenAI returned an empty response.",
+            )
         structured = _extract_json_payload(raw_output)
 
         return {
-            "wine": name,
-            "vintage": vintage,
+            "wine": parsed_name,
+            "vintage": parsed_vintage,
             "summary": structured.get("summary"),
             "description_breakdown": structured.get("description_breakdown", {}),
             "vintage_intelligence": structured.get("vintage_intelligence", {}),
@@ -142,3 +151,26 @@ Use this exact JSON shape:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI call failed: {repr(e)}")
+
+
+def _normalize_wine_query(name: str, vintage: Optional[int]) -> tuple[str, Optional[int]]:
+    normalized_name = name.strip()
+    if not normalized_name:
+        raise HTTPException(status_code=422, detail="Wine name cannot be empty.")
+
+    if vintage is not None:
+        return normalized_name, vintage
+
+    match = re.search(r"(?:\bvintage\s+)?(19\d{2}|20\d{2}|2100)\b", normalized_name, flags=re.IGNORECASE)
+    if not match:
+        return normalized_name, None
+
+    parsed_vintage = int(match.group(1))
+    cleaned_name = re.sub(
+        r"\s*(?:\bvintage\s+)?(?:19\d{2}|20\d{2}|2100)\b\s*",
+        " ",
+        normalized_name,
+        flags=re.IGNORECASE,
+    )
+    cleaned_name = re.sub(r"\s{2,}", " ", cleaned_name).strip(" ,.-")
+    return cleaned_name or normalized_name, parsed_vintage
