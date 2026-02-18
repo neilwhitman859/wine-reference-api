@@ -1,13 +1,24 @@
-from fastapi import FastAPI, HTTPException
+from pathlib import Path
+from typing import Optional
 import os
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from openai import OpenAI
 
 app = FastAPI()
+BASE_DIR = Path(__file__).resolve().parent
+
+
+@app.get("/")
+def home():
+    return FileResponse(BASE_DIR / "static" / "index.html")
+
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "2026-02-17 939"}
+    return {"status": "ok", "version": "2026-02-18 001"}
 
 
 @app.get("/explain-wine")
