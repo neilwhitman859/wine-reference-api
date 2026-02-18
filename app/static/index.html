@@ -74,7 +74,6 @@
       }
       .result {
         margin-top: 16px;
-        white-space: pre-wrap;
         line-height: 1.55;
         background: #f9f7f6;
         border: 1px solid #e6dfdc;
@@ -82,10 +81,23 @@
         padding: 14px;
         min-height: 90px;
       }
+      .result h2,
+      .result h3 {
+        margin-top: 12px;
+        margin-bottom: 6px;
+      }
+      .result ul {
+        margin-top: 4px;
+      }
       .meta {
         margin-top: 12px;
         font-size: 13px;
         color: #6e5d59;
+      }
+      code {
+        background: #f1ece9;
+        border-radius: 4px;
+        padding: 0 4px;
       }
       @media (max-width: 760px) {
         .grid {
@@ -100,7 +112,7 @@
         <h1>Wine Reference</h1>
         <p>
           Enter a wine name and optionally a vintage. The app calls
-          <code>/explain-wine</code> and returns a detailed summary.
+          <code>/explain-wine</code> and returns a detailed, weather-aware wine profile.
         </p>
 
         <form id="wine-form" class="grid">
@@ -134,6 +146,74 @@
       lastUpdatedEl.textContent = formattedUpdatedAt;
       lastUpdatedEl.dateTime = new Date(document.lastModified).toISOString();
 
+      const listItems = (items = []) => items.map((item) => `<li>${item}</li>`).join("");
+
+      const weatherRows = (patterns = []) => {
+        if (!patterns.length) {
+          return "<p>No weather detail returned.</p>";
+        }
+
+        return patterns
+          .map(
+            (entry) => `
+            <li>
+              <strong>${entry.period || "Period"}:</strong> ${entry.pattern || "N/A"}
+              <br />
+              <em>Impact:</em> ${entry.impact_on_grapes || "N/A"}
+              <br />
+              <em>Quality signal:</em> ${entry.quality_signal || "N/A"}
+            </li>
+          `,
+          )
+          .join("");
+      };
+
+      const renderResult = (data) => {
+        const title = data.vintage ? `${data.wine} (${data.vintage})` : data.wine;
+        const breakdown = data.description_breakdown || {};
+        const tasting = breakdown.tasting_profile || {};
+        const drinking = breakdown.drinking_experience || {};
+        const vintageIntel = data.vintage_intelligence || {};
+
+        return `
+          <h2>${title}</h2>
+          <p>${data.summary || "No summary returned."}</p>
+
+          <h3>Description breakdown</h3>
+          <p><strong>Producer & region:</strong> ${breakdown.producer_and_region || "N/A"}</p>
+          <p><strong>Grapes & style:</strong> ${breakdown.grape_composition_and_style || "N/A"}</p>
+
+          <h3>Tasting profile</h3>
+          <p><strong>Aroma</strong></p>
+          <ul>${listItems(tasting.aroma || [])}</ul>
+          <p><strong>Palate</strong></p>
+          <ul>${listItems(tasting.palate || [])}</ul>
+          <p><strong>Finish:</strong> ${tasting.finish || "N/A"}</p>
+
+          <h3>Drinking experience</h3>
+          <ul>
+            <li><strong>Body:</strong> ${drinking.body || "N/A"}</li>
+            <li><strong>Acidity:</strong> ${drinking.acidity || "N/A"}</li>
+            <li><strong>Tannin:</strong> ${drinking.tannin || "N/A"}</li>
+            <li><strong>Alcohol impression:</strong> ${drinking.alcohol_impression || "N/A"}</li>
+            <li><strong>Serving guidance:</strong> ${drinking.serving_guidance || "N/A"}</li>
+            <li><strong>Cellaring:</strong> ${drinking.cellaring_window || "N/A"}</li>
+          </ul>
+          <p><strong>Food pairings</strong></p>
+          <ul>${listItems(drinking.food_pairings || [])}</ul>
+
+          <h3>Vintage intelligence</h3>
+          <p><strong>Assessment:</strong> ${vintageIntel.selected_vintage_assessment || "N/A"}</p>
+          <p><strong>Comparison:</strong> ${vintageIntel.comparison_to_adjacent_vintages || "N/A"}</p>
+          <p><strong>Buying guidance:</strong> ${vintageIntel.buying_guidance || "N/A"}</p>
+          <p><strong>Weather patterns</strong></p>
+          <ul>${weatherRows(vintageIntel.weather_patterns || [])}</ul>
+
+          <h3>Uncertainty notes</h3>
+          <ul>${listItems(data.uncertainty_notes || ["None provided."])}</ul>
+        `;
+      };
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
@@ -164,11 +244,7 @@
             throw new Error(data.detail || "Request failed");
           }
 
-          const heading = data.vintage
-            ? `${data.wine} (${data.vintage})`
-            : `${data.wine}`;
-
-          resultEl.textContent = `${heading}\n\n${data.explanation}`;
+          resultEl.innerHTML = renderResult(data);
           statusEl.textContent = "Done.";
         } catch (error) {
           statusEl.textContent = error.message;
