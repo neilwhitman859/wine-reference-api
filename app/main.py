@@ -1,31 +1,90 @@
-from fastapi import FastAPI, HTTPException
+from pathlib import Path
+from typing import Optional
 import os
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from openai import OpenAI
 
 app = FastAPI()
+BASE_DIR = Path(__file__).resolve().parent
+LAST_UPDATED_ET = "2026-02-18 11:45 AM ET"
+
+
+@app.get("/")
+def home():
+    return FileResponse(BASE_DIR / "static" / "index.html")
+
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "2026-02-17 939"}
+    return {
+        "status": "ok",
+        "version": LAST_UPDATED_ET,
+        "last_updated_et": LAST_UPDATED_ET,
+    }
 
 
 @app.get("/explain-wine")
-def explain_wine(name: str):
+def explain_wine(name: str, vintage: Optional[int] = None):
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(
             status_code=500,
-            detail="OPENAI_API_KEY is not set in the server environment."
+            detail="OPENAI_API_KEY is not set in the server environment.",
         )
 
     client = OpenAI(api_key=api_key)
 
-    prompt = f"""Explain this wine in simple terms: {name}
+    if vintage is None:
+        prompt = f"""You are a professional sommelier.
 
-Describe:
-- Likely flavor profile
-- Body and acidity
-- Who might enjoy it
+Provide a detailed but approachable overview of this wine:
+- Bottle: {name}
+
+Format your response with clear section headings and include:
+1. Wine Overview
+   - Producer and region context
+   - Grape composition (if known) and style
+   - Typical tasting notes (aroma, palate, finish)
+2. Drinking Experience
+   - Body, acidity, tannin, alcohol impression
+   - Food pairing suggestions
+   - Cellaring/serving guidance
+3. Vintage Notes
+   - Mention notable good and weaker vintages generally associated with this bottle/winery
+   - Explain how vintage variation typically affects style and quality
+4. Buying Guidance
+   - What type of drinker this wine suits
+   - Relative value and when to drink
+
+If exact historical data is uncertain, state assumptions clearly and avoid fabrication.
+"""
+    else:
+        prompt = f"""You are a professional sommelier.
+
+Provide a detailed but approachable overview of this wine:
+- Bottle: {name}
+- Selected vintage: {vintage}
+
+Format your response with clear section headings and include:
+1. Wine Overview
+   - Producer and region context
+   - Grape composition (if known) and style
+   - Typical tasting notes (aroma, palate, finish)
+2. Drinking Experience
+   - Body, acidity, tannin, alcohol impression
+   - Food pairing suggestions
+   - Cellaring/serving guidance
+3. Vintage Comparison (same bottle)
+   - How the selected {vintage} compares with other nearby vintages from the same producer/wine
+   - Notable weather or harvest effects when relevant
+   - Whether {vintage} is generally stronger, weaker, or stylistically different than surrounding years
+4. Buying Guidance
+   - What type of drinker this vintage suits
+   - Relative value and when to drink
+
+If exact historical data is uncertain, state assumptions clearly and avoid fabrication.
 """
 
     try:
@@ -33,11 +92,13 @@ Describe:
             model="gpt-4.1-mini",
             input=prompt,
         )
-        # Responses API returns text via output_text convenience
         explanation = resp.output_text
 
-        return {"wine": name, "explanation": explanation}
+        return {
+            "wine": name,
+            "vintage": vintage,
+            "explanation": explanation,
+        }
 
     except Exception as e:
-        # This surfaces the real reason (auth, model name, networking, etc.)
         raise HTTPException(status_code=500, detail=f"OpenAI call failed: {repr(e)}")
