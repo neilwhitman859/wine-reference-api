@@ -33,11 +33,6 @@
       p {
         line-height: 1.5;
       }
-      .meta {
-        margin: 0 0 10px;
-        font-size: 13px;
-        color: #6e5d59;
-      }
       .grid {
         display: grid;
         grid-template-columns: 1fr 180px auto;
@@ -98,7 +93,6 @@
     <main class="wrap">
       <section class="card">
         <h1>Wine Reference</h1>
-        <p id="last-updated" class="meta">Code last updated: loading...</p>
         <p>
           Enter a wine name and optionally a vintage. The app calls
           <code>/explain-wine</code> and returns a detailed summary.
@@ -128,24 +122,6 @@
       const statusEl = document.getElementById("status");
       const resultEl = document.getElementById("result");
       const submitBtn = document.getElementById("submit-btn");
-      const lastUpdatedEl = document.getElementById("last-updated");
-
-      async function loadLastUpdated() {
-        try {
-          const response = await fetch("/health");
-          const data = await response.json();
-
-          if (response.ok && data.version) {
-            lastUpdatedEl.textContent = `Code last updated: ${data.version}`;
-          } else {
-            lastUpdatedEl.textContent = "Code last updated: unavailable";
-          }
-        } catch (error) {
-          lastUpdatedEl.textContent = "Code last updated: unavailable";
-        }
-      }
-
-      loadLastUpdated();
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
