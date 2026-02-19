@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+import json
 
 from fastapi.testclient import TestClient
 
@@ -49,9 +50,30 @@ class _FakeOpenAI:
         return _FakeResponse()
 
 
+class _FakeVinouResponse:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+    def read(self):
+        return json.dumps(
+            {
+                "data": {
+                    "name": "Opus One",
+                    "summary": "Authoritative producer data from Vinou.",
+                    "producer": "Opus One Winery",
+                    "region": "Napa Valley",
+                    "grape_composition": "Cabernet Sauvignon-led blend",
+                }
+            }
+        ).encode("utf-8")
+
+
 class WineQueryParsingTests(unittest.TestCase):
     @patch("app.main.OpenAI", _FakeOpenAI)
-    @patch("app.main.os.getenv", return_value="test-key")
+    @patch("app.main.os.getenv", side_effect=lambda key: {"OPENAI_API_KEY": "test-key"}.get(key))
     def test_tondonia_vintage_in_name_is_parsed(self, _mock_getenv):
         client = TestClient(app)
         response = client.get("/explain-wine", params={"name": "Tondonia vintage 2008"})
@@ -61,11 +83,12 @@ class WineQueryParsingTests(unittest.TestCase):
         self.assertEqual(payload["wine"], "Tondonia")
         self.assertEqual(payload["vintage"], 2008)
         self.assertIn("growing_season_weather", payload)
+        self.assertEqual(payload["data_source"], "openai")
         self.assertIn("- Bottle: Tondonia", _FakeOpenAI.last_input)
         self.assertIn("- Selected vintage: 2008", _FakeOpenAI.last_input)
 
     @patch("app.main.OpenAI", _FakeOpenAI)
-    @patch("app.main.os.getenv", return_value="test-key")
+    @patch("app.main.os.getenv", side_effect=lambda key: {"OPENAI_API_KEY": "test-key"}.get(key))
     def test_fort_ross_trailing_year_is_parsed(self, _mock_getenv):
         client = TestClient(app)
         response = client.get("/explain-wine", params={"name": "Fort Ross Top of Land 2020"})
@@ -75,8 +98,21 @@ class WineQueryParsingTests(unittest.TestCase):
         self.assertEqual(payload["wine"], "Fort Ross Top of Land")
         self.assertEqual(payload["vintage"], 2020)
         self.assertIn("growing_season_weather", payload)
+        self.assertEqual(payload["data_source"], "openai")
         self.assertIn("- Bottle: Fort Ross Top of Land", _FakeOpenAI.last_input)
         self.assertIn("- Selected vintage: 2020", _FakeOpenAI.last_input)
+
+    @patch("app.main.request.urlopen", return_value=_FakeVinouResponse())
+    @patch("app.main.os.getenv", side_effect=lambda key: {"VINOU_API_URL": "https://vinou.example/api"}.get(key))
+    def test_vinou_source_is_reported_when_available(self, _mock_getenv, _mock_urlopen):
+        client = TestClient(app)
+        response = client.get("/explain-wine", params={"name": "Opus One", "vintage": 2019})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["data_source"], "vinou")
+        self.assertIn("Vinou", payload["data_source_note"])
+        self.assertEqual(payload["summary"], "Authoritative producer data from Vinou.")
 
 
 if __name__ == "__main__":
