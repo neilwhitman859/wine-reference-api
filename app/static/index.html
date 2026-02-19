@@ -6,294 +6,85 @@
     <title>Wine Reference API</title>
     <style>
       :root {
-        color-scheme: light;
         font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color-scheme: light;
       }
       body {
         margin: 0;
-        background: radial-gradient(circle at top, #fdf8f5 0%, #f8f2ef 36%, #f4ece9 100%);
-        color: #2b1d1a;
+        background: #f7f4f2;
+        color: #2e2523;
       }
       .wrap {
-        max-width: 920px;
-        margin: 40px auto;
+        max-width: 1100px;
+        margin: 28px auto 40px;
         padding: 0 16px;
       }
       .card {
         background: #fff;
-        border: 1px solid #eadfda;
+        border: 1px solid #e7ddda;
         border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 12px 28px rgba(49, 18, 24, 0.08);
+        padding: 22px;
+        box-shadow: 0 14px 30px rgba(55, 24, 21, 0.08);
       }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 10px;
-        font-size: 30px;
-        letter-spacing: -0.02em;
-      }
-      p {
-        line-height: 1.5;
-      }
-      .lead {
-        margin: 0 0 18px;
-        color: #5f4a45;
-      }
-      .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-      }
-      .summary-item {
-        background: #fffaf7;
-        border: 1px solid #ecdcd5;
-        border-radius: 8px;
-        padding: 10px;
-      }
-      .summary-label {
-        font-size: 12px;
-        color: #6e5d59;
-      }
-      .summary-value {
-        font-size: 14px;
-        font-weight: 700;
-        margin-top: 2px;
-      }
-      .history {
-        margin-top: 18px;
-        padding: 14px;
-        border: 1px solid #eadfda;
-        border-radius: 10px;
-        background: #fff;
-      }
-      .history h3 {
-        margin: 0 0 8px;
-        font-size: 16px;
-      }
-      .history ul {
-        margin: 0;
-        padding-left: 20px;
-      }
-      .history li + li {
-        margin-top: 6px;
-      }
+      h1 { margin: 0 0 8px; }
+      .lead { color: #6a5a57; margin: 0 0 18px; }
       .grid {
         display: grid;
         grid-template-columns: 1fr 180px auto;
-        gap: 12px;
+        gap: 10px;
         align-items: end;
       }
-      label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 6px;
-      }
+      label { display:block; margin-bottom: 6px; font-weight: 600; }
       input {
-        width: 100%;
-        box-sizing: border-box;
-        border: 1px solid #d9ceca;
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 14px;
+        width: 100%; box-sizing: border-box; border: 1px solid #dacfc9; border-radius: 8px;
+        padding: 10px 12px; font-size: 14px;
       }
       button {
-        border: 0;
-        border-radius: 8px;
-        padding: 11px 16px;
-        background: #7a2538;
-        color: #fff;
-        font-weight: 600;
-        cursor: pointer;
+        border: 0; border-radius: 8px; background: #7b2237; color: white; padding: 11px 15px; font-weight: 700;
       }
-      button:disabled {
-        opacity: 0.6;
-        cursor: wait;
+      button:disabled { opacity: .6; }
+      .status { margin-top: 10px; min-height: 18px; }
+      .error { color: #a01818; }
+      .history {
+        margin-top: 14px; border: 1px solid #eadfda; border-radius: 10px; padding: 12px; background: #fffcfb;
       }
-      .status {
-        margin-top: 10px;
-        font-size: 14px;
-      }
-      .error {
-        color: #a11a1a;
-      }
+      .history h3 { margin:0 0 8px; font-size: 15px; }
+      .history ul { margin:0; padding-left: 20px; }
       .result {
-        margin-top: 18px;
-        line-height: 1.55;
-        background: linear-gradient(180deg, #fff 0%, #fdf9f7 100%);
+        margin-top: 16px;
         border: 1px solid #eadfda;
         border-radius: 12px;
-        padding: 20px;
-        min-height: 90px;
+        background: linear-gradient(180deg, #fff 0%, #fdfaf9 100%);
+        padding: 18px;
+        min-height: 120px;
       }
-      .hero {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 10px;
+      .topline {
+        display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; margin-bottom: 10px;
       }
-      .hero h2 {
-        margin: 0;
-      }
-      .hero p {
-        margin: 6px 0 0;
-      }
-      .pill {
-        display: inline-block;
-        margin-top: 8px;
-        background: #f5ece8;
-        color: #5f2932;
-        border: 1px solid #e7d8d2;
-        border-radius: 999px;
-        padding: 5px 10px;
-        font-size: 12px;
-        font-weight: 600;
-      }
-      .score-wrap {
-        text-align: right;
-        min-width: 180px;
-      }
-      .score {
-        font-size: 32px;
-        line-height: 1;
-        font-weight: 700;
-        color: #7a2538;
-      }
-      .score-label {
-        font-size: 12px;
-        color: #6e5d59;
-      }
+      .pill { font-size: 12px; border-radius: 999px; padding: 4px 10px; border: 1px solid #e4d9d4; background: #f7efec; display:inline-block; margin: 4px 8px 0 0; }
       .section {
-        border: 1px solid #eadfda;
-        background: #fff;
-        border-radius: 10px;
-        padding: 14px;
-        margin-top: 14px;
+        margin-top: 14px; border: 1px solid #e9dfdb; border-radius: 10px; padding: 14px; background: #fff;
       }
-      .section p {
-        margin: 8px 0;
+      .section h3 { margin: 0 0 8px; }
+      .section h4 { margin: 10px 0 6px; font-size: 14px; color: #624d4b; }
+      .facts-grid {
+        display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px;
       }
-      .section h3 {
-        margin: 0 0 8px;
-        font-size: 16px;
+      .fact {
+        border: 1px solid #ecdfda; border-radius: 8px; background: #fffaf8; padding: 9px;
       }
-      .kpi-grid {
-        margin-top: 10px;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-      }
-      .kpi {
-        background: linear-gradient(180deg, #fffaf7 0%, #fcf4ef 100%);
-        border: 1px solid #ecdcd5;
-        border-radius: 8px;
-        padding: 10px;
-      }
-      .kpi-label {
-        font-size: 12px;
-        color: #6e5d59;
-      }
-      .kpi-value {
-        font-size: 15px;
-        font-weight: 700;
-        margin-top: 2px;
-      }
-      .subtle {
-        color: #6e5d59;
-        font-size: 13px;
-      }
-      .result h2,
-      .result h3 {
-        margin-top: 12px;
-        margin-bottom: 6px;
-      }
-      .result ul {
-        margin-top: 4px;
-      }
-      .meta {
-        margin-top: 12px;
-        font-size: 13px;
-        color: #6e5d59;
-      }
-      .section ul {
-        margin-top: 6px;
-        padding-left: 20px;
-      }
-      .section li + li {
-        margin-top: 4px;
-      }
-      code {
-        background: #f1ece9;
-        border-radius: 4px;
-        padding: 0 4px;
-      }
-      .weather-viz {
-        margin-top: 12px;
-        border: 1px solid #e0d8d4;
-        border-radius: 8px;
-        padding: 12px;
-        background: #fff;
-      }
-      .legend {
-        margin-top: 8px;
-        display: flex;
-        gap: 14px;
-        font-size: 12px;
-        color: #6e5d59;
-      }
-      .legend-dot {
-        display: inline-block;
-        width: 9px;
-        height: 9px;
-        margin-right: 5px;
-        border-radius: 99px;
-      }
-      .metric-row {
-        margin-bottom: 12px;
-      }
-      .metric-row:last-child {
-        margin-bottom: 0;
-      }
-      .metric-row-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        font-size: 13px;
-        margin-bottom: 5px;
-      }
-      .bar-track {
-        height: 14px;
-        border-radius: 999px;
-        background: #f0e9e5;
-        overflow: hidden;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-      }
-      .bar {
-        height: 100%;
-      }
-      .bar.avg {
-        background: #c5b8b2;
-      }
-      .bar.vintage {
-        background: #7a2538;
-      }
-      @media (max-width: 760px) {
-        .grid {
-          grid-template-columns: 1fr;
-        }
-        .hero {
-          flex-direction: column;
-        }
-        .score-wrap {
-          text-align: left;
-        }
-        .kpi-grid {
-          grid-template-columns: 1fr;
-        }
-        .card {
-          padding: 18px;
-        }
+      .fact .label { font-size: 12px; color: #6f5f5b; }
+      .fact .value { font-weight: 700; margin-top: 2px; font-size: 14px; }
+      .kpi-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+      .kpi { border: 1px solid #ecdfda; border-radius: 8px; padding: 10px; background: #fffaf7; }
+      .kpi .label { font-size: 12px; color: #6f5f5b; }
+      .kpi .value { font-size: 15px; font-weight: 700; margin-top: 2px; }
+      ul { margin: 6px 0 0; padding-left: 20px; }
+      .meta { margin-top: 12px; color: #6f5f5b; font-size: 13px; }
+      .metadata { display:none; }
+      @media (max-width: 860px) {
+        .grid, .facts-grid, .kpi-grid { grid-template-columns: 1fr; }
+        .topline { flex-direction: column; }
       }
     </style>
   </head>
@@ -301,10 +92,7 @@
     <main class="wrap">
       <section class="card">
         <h1>Wine Reference</h1>
-        <p class="lead">
-          Enter a wine name and optionally a vintage. The app calls
-          <code>/explain-wine</code> and returns a detailed, weather-aware wine profile.
-        </p>
+        <p class="lead">A structured wine page with factual data, vintage environment metrics, and optional tasting/interpretive layers.</p>
 
         <form id="wine-form" class="grid">
           <div>
@@ -315,9 +103,7 @@
             <label for="vintage">Vintage (optional)</label>
             <input id="vintage" name="vintage" type="number" placeholder="e.g., 2018" min="1900" max="2100" />
           </div>
-          <div>
-            <button type="submit" id="submit-btn">Get wine overview</button>
-          </div>
+          <div><button type="submit" id="submit-btn">Build wine page</button></div>
         </form>
 
         <div id="status" class="status"></div>
@@ -325,7 +111,7 @@
           <h3>Last 10 bottles searched</h3>
           <ul id="search-history"></ul>
         </section>
-        <div id="result" class="result">Your wine overview will appear here.</div>
+        <div id="result" class="result">Your structured wine page will appear here.</div>
         <div class="meta">Last updated: <time id="last-updated"></time></div>
       </section>
     </main>
@@ -337,415 +123,226 @@
       const submitBtn = document.getElementById("submit-btn");
       const lastUpdatedEl = document.getElementById("last-updated");
       const searchHistoryEl = document.getElementById("search-history");
-      const SEARCH_HISTORY_KEY = "wine-search-history-v1";
+      const SEARCH_HISTORY_KEY = "wine-search-history-v2";
 
-      const formattedUpdatedAt = new Date(document.lastModified).toLocaleString();
-      lastUpdatedEl.textContent = formattedUpdatedAt;
+      lastUpdatedEl.textContent = new Date(document.lastModified).toLocaleString();
       lastUpdatedEl.dateTime = new Date(document.lastModified).toISOString();
 
-      const listItems = (items = []) => items.map((item) => `<li>${item}</li>`).join("");
+      const safe = (v, fallback = "Not disclosed") => (v === null || v === undefined || v === "" ? fallback : v);
+      const listItems = (items = [], empty = "Not available") =>
+        Array.isArray(items) && items.length ? items.map((i) => `<li>${i}</li>`).join("") : `<li>${empty}</li>`;
 
-      const weatherRows = (patterns = []) => {
-        if (!patterns.length) {
-          return "<p>No weather detail returned.</p>";
-        }
-
-        return patterns
-          .map(
-            (entry) => `
-            <li>
-              <strong>${entry.period || "Period"}:</strong> ${entry.pattern || "N/A"}
-              <br />
-              <em>Impact:</em> ${entry.impact_on_grapes || "N/A"}
-              <br />
-              <em>Quality signal:</em> ${entry.quality_signal || "N/A"}
-            </li>
-          `,
-          )
-          .join("");
-      };
-
-      const safeNumber = (value, digits = 2) => {
-        if (typeof value !== "number" || Number.isNaN(value)) {
-          return "N/A";
-        }
-        return value.toFixed(digits);
-      };
-
-      const metricVizRows = (weather = {}, vintageYear = null) => {
-        const averageYear = weather.all_years_average || {};
-        const selected = weather.selected_vintage || {};
-        if (!vintageYear || !weather.selected_vintage) {
-          return "<p>No selected vintage weather baseline comparison is available.</p>";
-        }
-
-        const rows = [
-          { key: "avg_high_c", label: "Growing-season average high (°C)", digits: 2 },
-          { key: "max_high_c", label: "Peak high during season (°C)", digits: 2 },
-          { key: "avg_low_c", label: "Growing-season average low (°C)", digits: 2 },
-          { key: "min_low_c", label: "Lowest low during season (°C)", digits: 2 },
-          { key: "rain_total_mm", label: "Growing-season rain total (mm)", digits: 1 },
-          { key: "rainy_days", label: "Growing-season rainy days", digits: 1 },
-        ];
-
-        return rows
-          .map((row) => {
-            const avg = averageYear[row.key];
-            const vin = selected[row.key];
-            if (typeof avg !== "number" || typeof vin !== "number") {
-              return "";
-            }
-            const scale = Math.max(avg, vin, 1);
-            const avgWidth = Math.max((avg / scale) * 100, 3);
-            const vintageWidth = Math.max((vin / scale) * 100, 3);
-            return `
-              <div class="metric-row">
-                <div class="metric-row-header">
-                  <strong>${row.label}</strong>
-                  <span>${vintageYear}: ${safeNumber(vin, row.digits)} | Avg year: ${safeNumber(avg, row.digits)}</span>
-                </div>
-                <div class="bar-track">
-                  <div class="bar avg" style="width:${avgWidth}%"></div>
-                  <div class="bar vintage" style="width:${vintageWidth}%"></div>
-                </div>
-              </div>
-            `;
-          })
-          .join("");
-      };
-
-      const parseGrapeComposition = (text = "") => {
-        if (!text) {
-          return [];
-        }
-        const matches = [...text.matchAll(/(\d{1,3})\s?%\s*([A-Za-z][A-Za-z\s\-]+)/g)];
-        return matches
-          .map((match) => ({
-            percent: Number(match[1]),
-            grape: (match[2] || "").trim().replace(/[.,;:]$/, ""),
-          }))
-          .filter((item) => item.percent > 0 && item.percent <= 100 && item.grape.length);
+      const parseGrapes = (text = "") => {
+        const matches = [...(text || "").matchAll(/(\d{1,3})\s?%\s*([A-Za-z][A-Za-z\s\-]+)/g)];
+        if (!matches.length) return [];
+        return matches.map((m) => ({ percent: Number(m[1]), grape: m[2].trim().replace(/[.,;:]$/, "") }));
       };
 
       const parseProducerRegion = (text = "") => {
-        if (!text) {
-          return { vineyard: "N/A", appellation: "N/A" };
-        }
-
-        const parts = text
-          .split(",")
-          .map((part) => part.trim())
-          .filter(Boolean);
-
-        if (!parts.length) {
-          return { vineyard: text, appellation: "N/A" };
-        }
-
+        const parts = (text || "").split(",").map((p) => p.trim()).filter(Boolean);
         return {
-          vineyard: parts[0] || "N/A",
-          appellation: parts.slice(1).join(", ") || "N/A",
+          producer: parts[0] || "Not disclosed",
+          region: parts.slice(1).join(", ") || "Not disclosed",
         };
       };
 
-      const formatGrapePercents = (grapeItems = []) => {
-        if (!grapeItems.length) {
-          return "N/A";
-        }
-        return grapeItems.map((item) => `${item.grape} ${item.percent}%`).join(", ");
+      const weatherInterpretation = (comparison = {}) => {
+        if (!comparison || Object.keys(comparison).length === 0) return "No environmental interpretation available.";
+        const high = comparison.avg_high_delta_c || 0;
+        const rain = comparison.rain_total_delta_mm || 0;
+        const tempRead = high >= 0 ? "warmer" : "cooler";
+        const rainRead = rain >= 0 ? "wetter" : "drier";
+        const tendency = high >= 0 ? "riper fruit and higher alcohol tendency" : "higher acidity and lower alcohol tendency";
+        return `Vintage tracked ${Math.abs(high).toFixed(1)}°C ${tempRead} and ${Math.abs(rain).toFixed(1)}mm ${rainRead} vs average; tendency: ${tendency}.`;
       };
 
-      const loadSearchHistory = () => {
-        try {
-          const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
-          if (!raw) {
-            return [];
-          }
-          const parsed = JSON.parse(raw);
-          return Array.isArray(parsed) ? parsed : [];
-        } catch {
-          return [];
-        }
-      };
-
-      const saveSearchHistory = (entries) => {
-        localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(entries));
-      };
-
-      const renderSearchHistory = () => {
-        const entries = loadSearchHistory();
-        if (!entries.length) {
-          searchHistoryEl.innerHTML = "<li>No bottles searched yet.</li>";
-          return;
-        }
-
-        searchHistoryEl.innerHTML = entries
-          .map(
-            (entry) =>
-              `<li><strong>${entry.wineName}</strong> | ${entry.vineyard} | ${entry.vintage} | ${entry.grapePercents} | ${entry.appellation}</li>`,
-          )
-          .join("");
-      };
-
-      const recordSearch = ({ wineName, vineyard, vintage, grapePercents, appellation }) => {
-        const entries = loadSearchHistory();
-        const deduped = entries.filter(
-          (entry) => !(entry.wineName === wineName && entry.vintage === vintage && entry.vineyard === vineyard),
-        );
-
-        deduped.unshift({ wineName, vineyard, vintage, grapePercents, appellation });
-        saveSearchHistory(deduped.slice(0, 10));
-        renderSearchHistory();
+      const vintageRank = (comparison = {}) => {
+        const bits = [];
+        const high = comparison.avg_high_delta_c || 0;
+        const rain = comparison.rain_total_delta_mm || 0;
+        bits.push(high >= 0 ? "warmer than avg" : "cooler than avg");
+        bits.push(rain >= 0 ? "wetter than avg" : "drier than avg");
+        return bits.join(" · ");
       };
 
       const formatCurrency = (value) =>
         new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 
-      const buildWeatherVintageScore = (weather = {}, vintageYear = null) => {
-        if (!vintageYear || !weather.selected_vintage || !weather.selected_vs_average_comparison) {
-          return { score: null, note: "No vintage year selected, so weather score is unavailable." };
-        }
-
-        const comp = weather.selected_vs_average_comparison;
-        const rainDelta = Math.abs(comp.rain_total_delta_mm || 0);
-        const avgHighDelta = Math.abs(comp.avg_high_delta_c || 0);
-        const avgLowDelta = Math.abs(comp.avg_low_delta_c || 0);
-        const rainyDaysDelta = Math.abs(comp.rainy_days_delta || 0);
-
-        let score = 5;
-        if (rainDelta > 70 || avgHighDelta > 2.7 || avgLowDelta > 2.5 || rainyDaysDelta > 10) {
-          score = 2;
-        } else if (rainDelta > 45 || avgHighDelta > 1.9 || avgLowDelta > 1.7 || rainyDaysDelta > 7) {
-          score = 3;
-        } else if (rainDelta > 28 || avgHighDelta > 1.1 || avgLowDelta > 1.1 || rainyDaysDelta > 4) {
-          score = 4;
-        }
-
-        return {
-          score,
-          note:
-            score >= 4
-              ? "Climate conditions stayed close to long-run norms, supporting a more reliable vintage profile."
-              : "Material weather deviations increase vintage risk and bottle-to-bottle variation.",
-        };
+      const estimatePrice = (vintage, weather = {}) => {
+        const yr = new Date().getFullYear();
+        const age = vintage ? Math.max(0, yr - vintage) : 4;
+        const tempDelta = Math.abs(weather?.selected_vs_average_comparison?.avg_high_delta_c || 0);
+        const score = Math.max(0.8, 1.2 - tempDelta * 0.08);
+        const avg = Math.round(45 * (1 + Math.min(age / 18, 0.8)) * score);
+        return { avg, low: Math.max(20, Math.round(avg * 0.8)), high: Math.round(avg * 1.25) };
       };
 
-      const estimateCurrentValue = (score, vintageYear = null) => {
-        const currentYear = new Date().getFullYear();
-        const age = vintageYear ? Math.max(currentYear - vintageYear, 0) : 6;
-        const weatherMultiplier = score ? 0.85 + score * 0.11 : 1;
-        const maturityMultiplier = 1 + Math.min(age / 20, 1.4) * 0.5;
-        const estimatedValue = 55 * weatherMultiplier * maturityMultiplier;
-        return Math.max(28, Math.round(estimatedValue));
+      const loadSearchHistory = () => {
+        try {
+          const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch { return []; }
       };
 
-      const weatherSummaryText = (weather = {}, vintageYear = null) => {
-        if (!weather || weather.error || !weather.selected_vintage || !weather.selected_vs_average_comparison) {
-          return weather?.error || "No weather comparison is available for this wine yet.";
-        }
+      const saveSearchHistory = (entries) => localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(entries));
 
-        const comp = weather.selected_vs_average_comparison;
-        const highDelta = comp.avg_high_delta_c || 0;
-        const rainDelta = comp.rain_total_delta_mm || 0;
-        const rainyDaysDelta = comp.rainy_days_delta || 0;
-
-        const tempDirection = highDelta >= 0 ? "warmer" : "cooler";
-        const rainDirection = rainDelta >= 0 ? "wetter" : "drier";
-        const rainyDaysDirection = rainyDaysDelta >= 0 ? "more rainy days" : "fewer rainy days";
-
-        return `${vintageYear} ran ${safeNumber(Math.abs(highDelta), 1)}°C ${tempDirection}, ${safeNumber(
-          Math.abs(rainDelta),
-          1,
-        )} mm ${rainDirection}, with ${safeNumber(Math.abs(rainyDaysDelta), 1)} ${rainyDaysDirection} versus baseline.`;
+      const renderSearchHistory = () => {
+        const entries = loadSearchHistory();
+        searchHistoryEl.innerHTML = entries.length
+          ? entries.map((e) => `<li><strong>${e.name}</strong> · ${e.vintage} · ${e.grapes}</li>`).join("")
+          : "<li>No bottles searched yet.</li>";
       };
 
-      const weatherComparisonSummary = (weather = {}, vintageYear = null) => {
-        if (!weather || weather.error) {
-          return `<p>${weather?.error || "No growing season weather data available."}</p>`;
-        }
-
-        const comp = weather.selected_vs_average_comparison || {};
-        const maxHighVsAvgHigh = safeNumber(comp.max_high_vs_avg_high_delta_c, 2);
-        const minLowVsAvgLow = safeNumber(comp.min_low_vs_avg_low_delta_c, 2);
-
-        return `
-          <p><strong>Region:</strong> ${weather.region || "N/A"}</p>
-          <p><strong>Open-Meteo baseline years:</strong> ${weather.all_years_period?.start_year || "N/A"} to ${weather.all_years_period?.end_year || "N/A"}</p>
-          <p><strong>${vintageYear || "Vintage"} peak-high vs baseline average high:</strong> ${maxHighVsAvgHigh}°C</p>
-          <p><strong>${vintageYear || "Vintage"} lowest-low vs baseline average low:</strong> ${minLowVsAvgLow}°C</p>
-          <div class="weather-viz">
-            ${metricVizRows(weather, vintageYear)}
-            <div class="legend">
-              <span><span class="legend-dot" style="background:#c5b8b2"></span>Average year</span>
-              <span><span class="legend-dot" style="background:#7a2538"></span>Selected vintage</span>
-            </div>
-          </div>
-        `;
+      const recordSearch = (entry) => {
+        const entries = loadSearchHistory().filter((e) => !(e.name === entry.name && e.vintage === entry.vintage));
+        entries.unshift(entry);
+        saveSearchHistory(entries.slice(0, 10));
+        renderSearchHistory();
       };
 
       const renderResult = (data) => {
-        const title = data.vintage ? `${data.wine} (${data.vintage})` : data.wine;
         const breakdown = data.description_breakdown || {};
-        const producerRegion = parseProducerRegion(breakdown.producer_and_region || "");
         const tasting = breakdown.tasting_profile || {};
-        const drinking = breakdown.drinking_experience || {};
-        const vintageIntel = data.vintage_intelligence || {};
+        const mouth = breakdown.drinking_experience || {};
         const weather = data.growing_season_weather || {};
-        const grapeComposition = parseGrapeComposition(breakdown.grape_composition_and_style || "");
-        const grapeCompositionTop = grapeComposition.length
-          ? grapeComposition.map((item) => `<li><strong>${item.percent}%</strong> ${item.grape}</li>`).join("")
-          : "<li>No explicit grape percentages were returned.</li>";
-        const grapePercentSummary = formatGrapePercents(grapeComposition);
-        const weatherScore = buildWeatherVintageScore(weather, data.vintage);
-        const estimatedValue = formatCurrency(estimateCurrentValue(weatherScore.score, data.vintage));
+        const comparison = weather.selected_vs_average_comparison || {};
+        const producerRegion = parseProducerRegion(breakdown.producer_and_region || "");
+        const grapes = parseGrapes(breakdown.grape_composition_and_style || "");
+        const grapeNames = grapes.length ? grapes.map((g) => g.grape).join(", ") : "Not disclosed";
+        const blend = grapes.length ? grapes.map((g) => `${g.grape} ${g.percent}%`).join(", ") : "Optional / Not disclosed";
+        const climate = data.raw_openai_payload?.climate_context || {};
+        const growing = climate.growing_season || {};
 
-        recordSearch({
-          wineName: data.wine || "N/A",
-          vineyard: producerRegion.vineyard,
-          vintage: data.vintage || "N/A",
-          grapePercents: grapePercentSummary,
-          appellation: producerRegion.appellation,
-        });
+        const price = estimatePrice(data.vintage, weather);
+        recordSearch({ name: safe(data.wine, "Unknown wine"), vintage: safe(data.vintage, "N/V"), grapes: grapeNames });
 
         return `
-          <div class="section">
-            <h3>Wine summary</h3>
-            <div class="summary-grid">
-              <div class="summary-item">
-                <div class="summary-label">Wine name</div>
-                <div class="summary-value">${data.wine || "N/A"}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Vineyard</div>
-                <div class="summary-value">${producerRegion.vineyard}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Vintage</div>
-                <div class="summary-value">${data.vintage || "N/A"}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Grape with percents</div>
-                <div class="summary-value">${grapePercentSummary}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Appellation/region</div>
-                <div class="summary-value">${producerRegion.appellation}</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="hero">
+          <div class="topline">
             <div>
-              <h2>${title}</h2>
-              <p>${data.summary || "No summary returned."}</p>
-              <span class="pill">Indicative market value: ${estimatedValue}</span>
+              <h2>${safe(data.wine, "Wine")} ${data.vintage ? `(${data.vintage})` : ""}</h2>
+              <p>${safe(data.summary, "No summary returned.")}</p>
+              <span class="pill">Open-Meteo enabled</span>
+              <span class="pill">AI interpretation layer</span>
             </div>
-            <div class="score-wrap">
-              <div class="score">${weatherScore.score ? `${weatherScore.score}/5` : "N/A"}</div>
-              <div class="score-label">Vintage weather score</div>
+            <div>
+              <strong>Climate rank:</strong> ${vintageRank(comparison)}
             </div>
           </div>
 
-          <div class="section">
-            <h3>At-a-glance</h3>
-            <p class="subtle">Condensed, data-led snapshot of producer quality, weather, and vintage signal.</p>
+          <section class="section">
+            <h3>1) Wine Facts (Knowable Without Tasting)</h3>
+            <div class="facts-grid">
+              <div class="fact"><div class="label">Wine Name</div><div class="value">${safe(data.wine)}</div></div>
+              <div class="fact"><div class="label">Producer</div><div class="value">${safe(producerRegion.producer)}</div></div>
+              <div class="fact"><div class="label">Vintage</div><div class="value">${safe(data.vintage, "N/V")}</div></div>
+              <div class="fact"><div class="label">Wine Type</div><div class="value">${safe(data.raw_openai_payload?.wine_type, "Not classified")}</div></div>
+              <div class="fact"><div class="label">Country / Region / Appellation</div><div class="value">${safe(producerRegion.region)}</div></div>
+              <div class="fact"><div class="label">Grape Variety</div><div class="value">${grapeNames}</div></div>
+              <div class="fact"><div class="label">Blend Percentages</div><div class="value">${blend}</div></div>
+              <div class="fact"><div class="label">ABV</div><div class="value">${safe(data.raw_openai_payload?.abv)}</div></div>
+              <div class="fact"><div class="label">Bottle Size(s)</div><div class="value">${safe(data.raw_openai_payload?.bottle_sizes)}</div></div>
+              <div class="fact"><div class="label">Viticulture</div><div class="value">${safe(data.raw_openai_payload?.viticulture, "Organic/Biodynamic/Sustainable/Conventional not disclosed")}</div></div>
+              <div class="fact"><div class="label">Single Vineyard</div><div class="value">${safe(data.raw_openai_payload?.single_vineyard, "Not disclosed")}</div></div>
+              <div class="fact"><div class="label">Winemaking</div><div class="value">${safe(data.raw_openai_payload?.winemaking, "Fermentation/Aging/Filtration not disclosed")}</div></div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h3>2) Vintage Environment (Open-Meteo Powered)</h3>
             <div class="kpi-grid">
-              <div class="kpi">
-                <div class="kpi-label">Producer & region</div>
-                <div class="kpi-value">${breakdown.producer_and_region || "N/A"}</div>
-              </div>
-              <div class="kpi">
-                <div class="kpi-label">Weather vs typical year</div>
-                <div class="kpi-value">${weatherSummaryText(weather, data.vintage)}</div>
-              </div>
-              <div class="kpi">
-                <div class="kpi-label">Vintage read</div>
-                <div class="kpi-value">${vintageIntel.selected_vintage_assessment || "N/A"}</div>
-              </div>
+              <div class="kpi"><div class="label">Growing Season Window</div><div class="value">${safe(growing.start_month, "?")}/${safe(growing.start_day, "?")} → ${safe(growing.end_month, "?")}/${safe(growing.end_day, "?")}</div></div>
+              <div class="kpi"><div class="label">Average Temperature</div><div class="value">${comparison.avg_high_delta_c !== undefined ? `${Math.abs(comparison.avg_high_delta_c).toFixed(1)}°C delta` : "N/A"}</div></div>
+              <div class="kpi"><div class="label">Total Rainfall</div><div class="value">${comparison.rain_total_delta_mm !== undefined ? `${Math.abs(comparison.rain_total_delta_mm).toFixed(1)}mm delta` : "N/A"}</div></div>
+              <div class="kpi"><div class="label">Frost / Heatwave Events</div><div class="value">${safe(data.raw_openai_payload?.climate_flags, "Not explicitly returned")}</div></div>
             </div>
-          </div>
+            <h4>Comparisons</h4>
+            <ul>
+              <li><strong>Vintage vs 10-year average:</strong> proxied using API baseline comparison (${safe(weather.all_years_period?.start_year, "N/A")}–${safe(weather.all_years_period?.end_year, "N/A")}).</li>
+              <li><strong>Vintage rank:</strong> ${vintageRank(comparison)}</li>
+              <li><strong>Simple interpretation:</strong> ${weatherInterpretation(comparison)}</li>
+            </ul>
+          </section>
 
-          <div class="section">
-            <h3>Blend and style</h3>
-            <ul>${grapeCompositionTop}</ul>
-            <p><strong>Style note:</strong> ${breakdown.grape_composition_and_style || "N/A"}</p>
-          </div>
+          <section class="section">
+            <h3>3) Tasting & Interpretation (Optional)</h3>
+            <h4>Nose</h4><ul>${listItems(tasting.aroma, "No nose descriptors returned")}</ul>
+            <h4>Palate</h4><ul>${listItems(tasting.palate, "No palate descriptors returned")}</ul>
+            <h4>Structure</h4>
+            <ul>
+              <li><strong>Sweetness:</strong> ${safe(data.raw_openai_payload?.sweetness)}</li>
+              <li><strong>Body:</strong> ${safe(mouth.body)}</li>
+              <li><strong>Acidity:</strong> ${safe(mouth.acidity)}</li>
+              <li><strong>Tannin:</strong> ${safe(mouth.tannin)}</li>
+              <li><strong>Alcohol perception:</strong> ${safe(mouth.alcohol_impression)}</li>
+              <li><strong>Finish:</strong> ${safe(tasting.finish)}</li>
+              <li><strong>Freeform notes:</strong> ${safe(data.vintage_intelligence?.selected_vintage_assessment)}</li>
+            </ul>
+          </section>
 
-          <div class="section">
-            <h3>Tasting profile</h3>
-          <p><strong>Aroma</strong></p>
-          <ul>${listItems(tasting.aroma || [])}</ul>
-          <p><strong>Palate</strong></p>
-          <ul>${listItems(tasting.palate || [])}</ul>
-          <p><strong>Finish:</strong> ${tasting.finish || "N/A"}</p>
+          <section class="section">
+            <h3>4) Style & Interpretation (Derived Layer)</h3>
+            <p>${safe(data.summary)}</p>
+            <ul>
+              <li><strong>Comparable wines:</strong> ${safe(data.raw_openai_payload?.comparable_wines, "Not returned")}</li>
+              <li><strong>Typical drinking window:</strong> ${safe(mouth.cellaring_window)}</li>
+              <li><strong>Aging potential range:</strong> ${safe(data.raw_openai_payload?.aging_potential, "Not returned")}</li>
+            </ul>
+          </section>
 
-          <p><strong>Weather-driven quality note:</strong> ${weatherScore.note}</p>
-          </div>
+          <section class="section">
+            <h3>5) Market & Availability</h3>
+            <ul>
+              <li><strong>Avg market price:</strong> ${formatCurrency(price.avg)}</li>
+              <li><strong>Price range:</strong> ${formatCurrency(price.low)} - ${formatCurrency(price.high)}</li>
+              <li><strong>Affiliate links:</strong> ${safe(data.raw_openai_payload?.affiliate_links, "Not connected")}</li>
+              <li><strong>Availability status:</strong> ${safe(data.raw_openai_payload?.availability_status, "Unknown")}</li>
+            </ul>
+          </section>
 
-          <div class="section">
-          <h3>Mouthfeel and serving</h3>
-          <ul>
-            <li><strong>Body:</strong> ${drinking.body || "N/A"}</li>
-            <li><strong>Acidity:</strong> ${drinking.acidity || "N/A"}</li>
-            <li><strong>Tannin:</strong> ${drinking.tannin || "N/A"}</li>
-            <li><strong>Alcohol impression:</strong> ${drinking.alcohol_impression || "N/A"}</li>
-            <li><strong>Serving guidance:</strong> ${drinking.serving_guidance || "N/A"}</li>
-            <li><strong>Cellaring:</strong> ${drinking.cellaring_window || "N/A"}</li>
-          </ul>
-          <p><strong>Food pairings</strong></p>
-          <ul>${listItems(drinking.food_pairings || [])}</ul>
-          </div>
+          <section class="section">
+            <h3>6) Community Layer</h3>
+            <ul>
+              <li><strong>User ratings:</strong> ${safe(data.raw_openai_payload?.community?.ratings, "Not integrated")}</li>
+              <li><strong>Favorites / Cellar:</strong> ${safe(data.raw_openai_payload?.community?.cellar_count, "Not integrated")}</li>
+              <li><strong>User notes:</strong> ${safe(data.raw_openai_payload?.community?.notes, "Not integrated")}</li>
+            </ul>
+          </section>
 
-          <div class="section">
-          <h3>Vintage intelligence and buying stance</h3>
-          <p><strong>Assessment:</strong> ${vintageIntel.selected_vintage_assessment || "N/A"}</p>
-          <p><strong>Comparison:</strong> ${vintageIntel.comparison_to_adjacent_vintages || "N/A"}</p>
-          <p><strong>Buying guidance:</strong> ${vintageIntel.buying_guidance || "N/A"}</p>
-          <p><strong>Weather patterns</strong></p>
-          <ul>${weatherRows(vintageIntel.weather_patterns || [])}</ul>
-          </div>
-
-          <div class="section">
-          <h3>Growing season weather benchmark (Open-Meteo)</h3>
-          ${weatherComparisonSummary(weather, data.vintage)}
-          </div>
-
-          <div class="section">
-          <h3>Uncertainty notes</h3>
-          <ul>${listItems(data.uncertainty_notes || ["None provided."])}</ul>
-          </div>
+          <section class="section metadata">
+            <h3>7) System Metadata (Hidden)</h3>
+            <ul>
+              <li>Wine ID: ${safe(data.raw_openai_payload?.wine_id, "Pending")}</li>
+              <li>Producer ID: ${safe(data.raw_openai_payload?.producer_id, "Pending")}</li>
+              <li>Climate dataset version: Open-Meteo + local transform v1</li>
+              <li>Last updated: ${new Date().toISOString()}</li>
+            </ul>
+          </section>
         `;
       };
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
-
         const wineName = document.getElementById("name").value.trim();
         const vintageRaw = document.getElementById("vintage").value.trim();
-
         if (!wineName) {
           statusEl.textContent = "Please enter a wine name.";
           statusEl.className = "status error";
           return;
         }
-
         const params = new URLSearchParams({ name: wineName });
-        if (vintageRaw) {
-          params.set("vintage", vintageRaw);
-        }
+        if (vintageRaw) params.set("vintage", vintageRaw);
 
         statusEl.textContent = "Loading...";
         statusEl.className = "status";
-        resultEl.textContent = "";
         submitBtn.disabled = true;
+        resultEl.textContent = "";
 
         try {
           const response = await fetch(`/explain-wine?${params.toString()}`);
           const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.detail || "Request failed");
-          }
-
+          if (!response.ok) throw new Error(data.detail || "Request failed");
           resultEl.innerHTML = renderResult(data);
           statusEl.textContent = "Done.";
         } catch (error) {
