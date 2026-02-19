@@ -81,9 +81,10 @@ Provide a detailed JSON response for this wine:
 
 Requirements:
 1) Respond ONLY as valid JSON. No markdown, no prose outside JSON.
-2) Keep every field concise but informative.
-3) If certainty is low, include assumptions in the `uncertainty_notes` field.
-4) Include weather-pattern-driven vintage insight based on broadly documented regional climate patterns and harvest timing.
+2) Keep every field concise, data-driven, and professional in tone.
+3) Prioritize measurable statements (temperature/rainfall deviations, timing, relative ranking) over generic adjectives.
+4) If certainty is low, include assumptions in the `uncertainty_notes` field.
+5) Include weather-pattern-driven vintage insight based on broadly documented regional climate patterns and harvest timing.
 
 Use this exact JSON shape:
 {{

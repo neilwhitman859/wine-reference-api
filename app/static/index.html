@@ -392,10 +392,10 @@
         }
 
         const comp = weather.selected_vs_average_comparison;
-        const rainDelta = Math.abs(comp.rain_total_vs_avg_delta_mm || 0);
-        const avgHighDelta = Math.abs(comp.avg_high_vs_avg_high_delta_c || 0);
-        const avgLowDelta = Math.abs(comp.avg_low_vs_avg_low_delta_c || 0);
-        const rainyDaysDelta = Math.abs(comp.rainy_days_vs_avg_delta || 0);
+        const rainDelta = Math.abs(comp.rain_total_delta_mm || 0);
+        const avgHighDelta = Math.abs(comp.avg_high_delta_c || 0);
+        const avgLowDelta = Math.abs(comp.avg_low_delta_c || 0);
+        const rainyDaysDelta = Math.abs(comp.rainy_days_delta || 0);
 
         let score = 5;
         if (rainDelta > 70 || avgHighDelta > 2.7 || avgLowDelta > 2.5 || rainyDaysDelta > 10) {
@@ -410,8 +410,8 @@
           score,
           note:
             score >= 4
-              ? "Weather in this growing season tracked fairly close to regional norms and likely supports consistent quality."
-              : "This vintage saw meaningful weather deviations from a typical year, which can introduce more variability in quality.",
+              ? "Climate conditions stayed close to long-run norms, supporting a more reliable vintage profile."
+              : "Material weather deviations increase vintage risk and bottle-to-bottle variation.",
         };
       };
 
@@ -430,18 +430,18 @@
         }
 
         const comp = weather.selected_vs_average_comparison;
-        const highDelta = comp.avg_high_vs_avg_high_delta_c || 0;
-        const rainDelta = comp.rain_total_vs_avg_delta_mm || 0;
-        const rainyDaysDelta = comp.rainy_days_vs_avg_delta || 0;
+        const highDelta = comp.avg_high_delta_c || 0;
+        const rainDelta = comp.rain_total_delta_mm || 0;
+        const rainyDaysDelta = comp.rainy_days_delta || 0;
 
         const tempDirection = highDelta >= 0 ? "warmer" : "cooler";
         const rainDirection = rainDelta >= 0 ? "wetter" : "drier";
         const rainyDaysDirection = rainyDaysDelta >= 0 ? "more rainy days" : "fewer rainy days";
 
-        return `${vintageYear} was about ${safeNumber(Math.abs(highDelta), 1)}°C ${tempDirection} than a typical growing season, ${safeNumber(
+        return `${vintageYear} ran ${safeNumber(Math.abs(highDelta), 1)}°C ${tempDirection}, ${safeNumber(
           Math.abs(rainDelta),
           1,
-        )} mm ${rainDirection}, and had ${safeNumber(Math.abs(rainyDaysDelta), 1)} ${rainyDaysDirection}.`;
+        )} mm ${rainDirection}, with ${safeNumber(Math.abs(rainyDaysDelta), 1)} ${rainyDaysDirection} versus baseline.`;
       };
 
       const weatherComparisonSummary = (weather = {}, vintageYear = null) => {
@@ -456,8 +456,8 @@
         return `
           <p><strong>Region:</strong> ${weather.region || "N/A"}</p>
           <p><strong>Open-Meteo baseline years:</strong> ${weather.all_years_period?.start_year || "N/A"} to ${weather.all_years_period?.end_year || "N/A"}</p>
-          <p><strong>${vintageYear || "Vintage"} peak-high vs average-year average-high:</strong> ${maxHighVsAvgHigh}°C</p>
-          <p><strong>${vintageYear || "Vintage"} lowest-low vs average-year average-low:</strong> ${minLowVsAvgLow}°C</p>
+          <p><strong>${vintageYear || "Vintage"} peak-high vs baseline average high:</strong> ${maxHighVsAvgHigh}°C</p>
+          <p><strong>${vintageYear || "Vintage"} lowest-low vs baseline average low:</strong> ${minLowVsAvgLow}°C</p>
           <div class="weather-viz">
             ${metricVizRows(weather, vintageYear)}
             <div class="legend">
@@ -487,7 +487,7 @@
             <div>
               <h2>${title}</h2>
               <p>${data.summary || "No summary returned."}</p>
-              <span class="pill">Estimated current value: ${estimatedValue}</span>
+              <span class="pill">Indicative market value: ${estimatedValue}</span>
             </div>
             <div class="score-wrap">
               <div class="score">${weatherScore.score ? `${weatherScore.score}/5` : "N/A"}</div>
@@ -497,7 +497,7 @@
 
           <div class="section">
             <h3>At-a-glance</h3>
-            <p class="subtle">A quick summary before diving into tasting details and vintage context.</p>
+            <p class="subtle">Condensed, data-led snapshot of producer quality, weather, and vintage signal.</p>
             <div class="kpi-grid">
               <div class="kpi">
                 <div class="kpi-label">Producer & region</div>
@@ -546,7 +546,7 @@
           </div>
 
           <div class="section">
-          <h3>Vintage intelligence and buying guidance</h3>
+          <h3>Vintage intelligence and buying stance</h3>
           <p><strong>Assessment:</strong> ${vintageIntel.selected_vintage_assessment || "N/A"}</p>
           <p><strong>Comparison:</strong> ${vintageIntel.comparison_to_adjacent_vintages || "N/A"}</p>
           <p><strong>Buying guidance:</strong> ${vintageIntel.buying_guidance || "N/A"}</p>
