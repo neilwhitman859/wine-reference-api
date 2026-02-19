@@ -10,8 +10,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from openai import OpenAI
 
+from app.xwines import XWinesIndex
+
 app = FastAPI()
 BASE_DIR = Path(__file__).resolve().parent
+XWINES_INDEX = XWinesIndex.load_from_repo(BASE_DIR)
 
 
 @app.get("/")
@@ -73,11 +76,15 @@ def explain_wine(name: str, vintage: Optional[int] = None):
         else "No specific vintage selected"
     )
 
+    dataset_match = XWINES_INDEX.search(parsed_name)
+    dataset_context = dataset_match.to_prompt_block() if dataset_match else "No exact X-Wines dataset match found."
+
     prompt = f"""You are a professional sommelier and wine market analyst.
 
 Provide a detailed JSON response for this wine:
 - Bottle: {parsed_name}
 - {vintage_context}
+- {dataset_context}
 
 Requirements:
 1) Respond ONLY as valid JSON. No markdown, no prose outside JSON.
@@ -161,6 +168,7 @@ Use this exact JSON shape:
             "description_breakdown": structured.get("description_breakdown", {}),
             "vintage_intelligence": structured.get("vintage_intelligence", {}),
             "growing_season_weather": growing_season_weather,
+            "xwines_dataset_match": dataset_match.to_response_payload() if dataset_match else None,
             "uncertainty_notes": structured.get("uncertainty_notes", []),
             "raw_openai_payload": structured,
         }
