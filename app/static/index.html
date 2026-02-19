@@ -39,14 +39,43 @@
         margin: 0 0 18px;
         color: #5f4a45;
       }
-      .pairing-note {
-        margin: 0 0 14px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        border: 1px solid #e8d7cf;
-        background: #fff6f0;
-        color: #5f2932;
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .summary-item {
+        background: #fffaf7;
+        border: 1px solid #ecdcd5;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .summary-label {
+        font-size: 12px;
+        color: #6e5d59;
+      }
+      .summary-value {
         font-size: 14px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+      .history {
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid #eadfda;
+        border-radius: 10px;
+        background: #fff;
+      }
+      .history h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+      .history ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+      .history li + li {
+        margin-top: 6px;
       }
       .grid {
         display: grid;
@@ -271,10 +300,6 @@
   <body>
     <main class="wrap">
       <section class="card">
-        <p class="pairing-note">
-          <strong>Chocolate pairing note:</strong> I’d pair this with a dark chocolate sea salt bar (around 70% cacao), because
-          its bittersweet cocoa depth complements structured red-fruit and oak notes while a hint of salt lifts the finish.
-        </p>
         <h1>Wine Reference</h1>
         <p class="lead">
           Enter a wine name and optionally a vintage. The app calls
@@ -296,6 +321,10 @@
         </form>
 
         <div id="status" class="status"></div>
+        <section class="history">
+          <h3>Last 10 bottles searched</h3>
+          <ul id="search-history"></ul>
+        </section>
         <div id="result" class="result">Your wine overview will appear here.</div>
         <div class="meta">Last updated: <time id="last-updated"></time></div>
       </section>
@@ -307,6 +336,8 @@
       const resultEl = document.getElementById("result");
       const submitBtn = document.getElementById("submit-btn");
       const lastUpdatedEl = document.getElementById("last-updated");
+      const searchHistoryEl = document.getElementById("search-history");
+      const SEARCH_HISTORY_KEY = "wine-search-history-v1";
 
       const formattedUpdatedAt = new Date(document.lastModified).toLocaleString();
       lastUpdatedEl.textContent = formattedUpdatedAt;
@@ -394,6 +425,76 @@
             grape: (match[2] || "").trim().replace(/[.,;:]$/, ""),
           }))
           .filter((item) => item.percent > 0 && item.percent <= 100 && item.grape.length);
+      };
+
+      const parseProducerRegion = (text = "") => {
+        if (!text) {
+          return { vineyard: "N/A", appellation: "N/A" };
+        }
+
+        const parts = text
+          .split(",")
+          .map((part) => part.trim())
+          .filter(Boolean);
+
+        if (!parts.length) {
+          return { vineyard: text, appellation: "N/A" };
+        }
+
+        return {
+          vineyard: parts[0] || "N/A",
+          appellation: parts.slice(1).join(", ") || "N/A",
+        };
+      };
+
+      const formatGrapePercents = (grapeItems = []) => {
+        if (!grapeItems.length) {
+          return "N/A";
+        }
+        return grapeItems.map((item) => `${item.grape} ${item.percent}%`).join(", ");
+      };
+
+      const loadSearchHistory = () => {
+        try {
+          const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+          if (!raw) {
+            return [];
+          }
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      };
+
+      const saveSearchHistory = (entries) => {
+        localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(entries));
+      };
+
+      const renderSearchHistory = () => {
+        const entries = loadSearchHistory();
+        if (!entries.length) {
+          searchHistoryEl.innerHTML = "<li>No bottles searched yet.</li>";
+          return;
+        }
+
+        searchHistoryEl.innerHTML = entries
+          .map(
+            (entry) =>
+              `<li><strong>${entry.wineName}</strong> | ${entry.vineyard} | ${entry.vintage} | ${entry.grapePercents} | ${entry.appellation}</li>`,
+          )
+          .join("");
+      };
+
+      const recordSearch = ({ wineName, vineyard, vintage, grapePercents, appellation }) => {
+        const entries = loadSearchHistory();
+        const deduped = entries.filter(
+          (entry) => !(entry.wineName === wineName && entry.vintage === vintage && entry.vineyard === vineyard),
+        );
+
+        deduped.unshift({ wineName, vineyard, vintage, grapePercents, appellation });
+        saveSearchHistory(deduped.slice(0, 10));
+        renderSearchHistory();
       };
 
       const formatCurrency = (value) =>
@@ -484,6 +585,7 @@
       const renderResult = (data) => {
         const title = data.vintage ? `${data.wine} (${data.vintage})` : data.wine;
         const breakdown = data.description_breakdown || {};
+        const producerRegion = parseProducerRegion(breakdown.producer_and_region || "");
         const tasting = breakdown.tasting_profile || {};
         const drinking = breakdown.drinking_experience || {};
         const vintageIntel = data.vintage_intelligence || {};
@@ -492,10 +594,45 @@
         const grapeCompositionTop = grapeComposition.length
           ? grapeComposition.map((item) => `<li><strong>${item.percent}%</strong> ${item.grape}</li>`).join("")
           : "<li>No explicit grape percentages were returned.</li>";
+        const grapePercentSummary = formatGrapePercents(grapeComposition);
         const weatherScore = buildWeatherVintageScore(weather, data.vintage);
         const estimatedValue = formatCurrency(estimateCurrentValue(weatherScore.score, data.vintage));
 
+        recordSearch({
+          wineName: data.wine || "N/A",
+          vineyard: producerRegion.vineyard,
+          vintage: data.vintage || "N/A",
+          grapePercents: grapePercentSummary,
+          appellation: producerRegion.appellation,
+        });
+
         return `
+          <div class="section">
+            <h3>Wine summary</h3>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <div class="summary-label">Wine name</div>
+                <div class="summary-value">${data.wine || "N/A"}</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-label">Vineyard</div>
+                <div class="summary-value">${producerRegion.vineyard}</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-label">Vintage</div>
+                <div class="summary-value">${data.vintage || "N/A"}</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-label">Grape with percents</div>
+                <div class="summary-value">${grapePercentSummary}</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-label">Appellation/region</div>
+                <div class="summary-value">${producerRegion.appellation}</div>
+              </div>
+            </div>
+          </div>
+
           <div class="hero">
             <div>
               <h2>${title}</h2>
@@ -619,6 +756,8 @@
           submitBtn.disabled = false;
         }
       });
+
+      renderSearchHistory();
     </script>
   </body>
 </html>
