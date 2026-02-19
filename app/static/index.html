@@ -11,27 +11,33 @@
       }
       body {
         margin: 0;
-        background: #faf7f5;
+        background: radial-gradient(circle at top, #fdf8f5 0%, #f8f2ef 36%, #f4ece9 100%);
         color: #2b1d1a;
       }
       .wrap {
         max-width: 920px;
-        margin: 32px auto;
+        margin: 40px auto;
         padding: 0 16px;
       }
       .card {
         background: #fff;
-        border: 1px solid #e7dfdc;
-        border-radius: 12px;
-        padding: 18px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        border: 1px solid #eadfda;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 12px 28px rgba(49, 18, 24, 0.08);
       }
       h1 {
         margin-top: 0;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
+        font-size: 30px;
+        letter-spacing: -0.02em;
       }
       p {
         line-height: 1.5;
+      }
+      .lead {
+        margin: 0 0 18px;
+        color: #5f4a45;
       }
       .grid {
         display: grid;
@@ -73,12 +79,12 @@
         color: #a11a1a;
       }
       .result {
-        margin-top: 16px;
+        margin-top: 18px;
         line-height: 1.55;
         background: linear-gradient(180deg, #fff 0%, #fdf9f7 100%);
-        border: 1px solid #e4dad5;
-        border-radius: 10px;
-        padding: 18px;
+        border: 1px solid #eadfda;
+        border-radius: 12px;
+        padding: 20px;
         min-height: 90px;
       }
       .hero {
@@ -126,6 +132,9 @@
         padding: 14px;
         margin-top: 14px;
       }
+      .section p {
+        margin: 8px 0;
+      }
       .section h3 {
         margin: 0 0 8px;
         font-size: 16px;
@@ -137,7 +146,7 @@
         gap: 10px;
       }
       .kpi {
-        background: #fcf7f4;
+        background: linear-gradient(180deg, #fffaf7 0%, #fcf4ef 100%);
         border: 1px solid #ecdcd5;
         border-radius: 8px;
         padding: 10px;
@@ -147,9 +156,13 @@
         color: #6e5d59;
       }
       .kpi-value {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         margin-top: 2px;
+      }
+      .subtle {
+        color: #6e5d59;
+        font-size: 13px;
       }
       .result h2,
       .result h3 {
@@ -164,6 +177,13 @@
         font-size: 13px;
         color: #6e5d59;
       }
+      .section ul {
+        margin-top: 6px;
+        padding-left: 20px;
+      }
+      .section li + li {
+        margin-top: 4px;
+      }
       code {
         background: #f1ece9;
         border-radius: 4px;
@@ -175,6 +195,20 @@
         border-radius: 8px;
         padding: 12px;
         background: #fff;
+      }
+      .legend {
+        margin-top: 8px;
+        display: flex;
+        gap: 14px;
+        font-size: 12px;
+        color: #6e5d59;
+      }
+      .legend-dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        margin-right: 5px;
+        border-radius: 99px;
       }
       .metric-row {
         margin-bottom: 12px;
@@ -219,6 +253,9 @@
         .kpi-grid {
           grid-template-columns: 1fr;
         }
+        .card {
+          padding: 18px;
+        }
       }
     </style>
   </head>
@@ -226,7 +263,7 @@
     <main class="wrap">
       <section class="card">
         <h1>Wine Reference</h1>
-        <p>
+        <p class="lead">
           Enter a wine name and optionally a vintage. The app calls
           <code>/explain-wine</code> and returns a detailed, weather-aware wine profile.
         </p>
@@ -423,6 +460,10 @@
           <p><strong>${vintageYear || "Vintage"} lowest-low vs average-year average-low:</strong> ${minLowVsAvgLow}°C</p>
           <div class="weather-viz">
             ${metricVizRows(weather, vintageYear)}
+            <div class="legend">
+              <span><span class="legend-dot" style="background:#c5b8b2"></span>Average year</span>
+              <span><span class="legend-dot" style="background:#7a2538"></span>Selected vintage</span>
+            </div>
           </div>
         `;
       };
@@ -456,6 +497,7 @@
 
           <div class="section">
             <h3>At-a-glance</h3>
+            <p class="subtle">A quick summary before diving into tasting details and vintage context.</p>
             <div class="kpi-grid">
               <div class="kpi">
                 <div class="kpi-label">Producer & region</div>
@@ -473,7 +515,7 @@
           </div>
 
           <div class="section">
-            <h3>Grape composition</h3>
+            <h3>Blend and style</h3>
             <ul>${grapeCompositionTop}</ul>
             <p><strong>Style note:</strong> ${breakdown.grape_composition_and_style || "N/A"}</p>
           </div>
@@ -490,7 +532,7 @@
           </div>
 
           <div class="section">
-          <h3>Drinking experience</h3>
+          <h3>Mouthfeel and serving</h3>
           <ul>
             <li><strong>Body:</strong> ${drinking.body || "N/A"}</li>
             <li><strong>Acidity:</strong> ${drinking.acidity || "N/A"}</li>
@@ -504,7 +546,7 @@
           </div>
 
           <div class="section">
-          <h3>Vintage intelligence</h3>
+          <h3>Vintage intelligence and buying guidance</h3>
           <p><strong>Assessment:</strong> ${vintageIntel.selected_vintage_assessment || "N/A"}</p>
           <p><strong>Comparison:</strong> ${vintageIntel.comparison_to_adjacent_vintages || "N/A"}</p>
           <p><strong>Buying guidance:</strong> ${vintageIntel.buying_guidance || "N/A"}</p>
@@ -513,13 +555,13 @@
           </div>
 
           <div class="section">
-          <h3>Uncertainty notes</h3>
-          <ul>${listItems(data.uncertainty_notes || ["None provided."])}</ul>
+          <h3>Growing season weather benchmark (Open-Meteo)</h3>
+          ${weatherComparisonSummary(weather, data.vintage)}
           </div>
 
           <div class="section">
-          <h3>Growing season weather benchmark (Open-Meteo)</h3>
-          ${weatherComparisonSummary(weather, data.vintage)}
+          <h3>Uncertainty notes</h3>
+          <ul>${listItems(data.uncertainty_notes || ["None provided."])}</ul>
           </div>
         `;
       };
