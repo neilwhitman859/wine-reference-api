@@ -32,6 +32,35 @@ def health():
     }
 
 
+@app.get("/sources/health")
+def sources_health():
+    CMS_WINES_DIR.mkdir(parents=True, exist_ok=True)
+    wine_count = len(list(CMS_WINES_DIR.glob("*.json")))
+    winevybe_url = os.getenv("WINEVYBE_API_URL")
+    vinou_url = os.getenv("VINOU_API_URL")
+    openai_key = os.getenv("OPENAI_API_KEY")
+    return {
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "sources": {
+            "git_cms": {
+                "configured": True,
+                "wine_count": wine_count,
+            },
+            "winevybe": {
+                "configured": bool(winevybe_url),
+                "url": winevybe_url,
+            },
+            "vinou": {
+                "configured": bool(vinou_url),
+                "url": vinou_url,
+            },
+            "openai": {
+                "configured": bool(openai_key),
+            },
+        },
+    }
+
+
 def _extract_json_payload(text: str) -> dict[str, Any]:
     cleaned = text.strip()
     if cleaned.startswith("```"):

@@ -106,6 +106,85 @@
         padding: 22px;
         box-shadow: 0 16px 32px rgba(31, 23, 20, 0.08);
       }
+      .panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      .panel-head h2 {
+        margin: 0 0 6px;
+        font-family: "Fraunces", "Times New Roman", serif;
+        font-size: 22px;
+      }
+      .panel-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        max-width: 520px;
+      }
+      .source-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .source-card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+        background: #fff;
+        box-shadow: 0 14px 28px rgba(31, 23, 20, 0.08);
+      }
+      .source-card h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+      .source-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .source-status.ok {
+        background: #e7f6ea;
+        color: #1e5631;
+      }
+      .source-status.ok.selected {
+        background: #dbeefe;
+        color: #0f3d6e;
+      }
+      .source-status.warn {
+        background: #f9efe4;
+        color: #7a3a10;
+      }
+      .source-status.off {
+        background: #f7e7e7;
+        color: #8a1f1f;
+      }
+      .source-lines {
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        color: #352a26;
+      }
+      .source-lines span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .source-summary {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: right;
+        max-width: 240px;
+      }
       .form-grid {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 170px) auto;
@@ -267,6 +346,15 @@
         .result-head {
           flex-direction: column;
         }
+        .panel-head {
+          flex-direction: column;
+        }
+        .source-grid {
+          grid-template-columns: 1fr;
+        }
+        .source-summary {
+          text-align: left;
+        }
       }
     </style>
   </head>
@@ -314,6 +402,23 @@
         </div>
       </section>
 
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="eyebrow">Source checks</div>
+            <h2>Confirm data source coverage</h2>
+            <p>
+              Each card shows whether a source responded for the current query, plus
+              the fields pulled directly from that source.
+            </p>
+          </div>
+          <div class="source-summary" id="source-summary">
+            Submit a query to validate sources.
+          </div>
+        </div>
+        <div class="source-grid" id="source-grid"></div>
+      </section>
+
       <section class="results">
         <article class="result-card">
           <div class="result-head">
@@ -343,6 +448,15 @@
       const lastUpdatedEl = document.getElementById("last-updated");
       const resultTitleEl = document.getElementById("result-title");
       const resultMetaEl = document.getElementById("result-meta");
+      const sourceGridEl = document.getElementById("source-grid");
+      const sourceSummaryEl = document.getElementById("source-summary");
+
+      const SOURCE_CARDS = [
+        { key: "git_cms", label: "Git CMS", helper: "Local curated content." },
+        { key: "winevybe", label: "WineVybe API", helper: "External coverage feed." },
+        { key: "vinou", label: "Vinou API", helper: "External detail source." },
+        { key: "openai", label: "OpenAI fallback", helper: "Generated if others miss." },
+      ];
 
       const formattedUpdatedAt = new Date(document.lastModified).toLocaleString();
       lastUpdatedEl.textContent = formattedUpdatedAt;
@@ -376,6 +490,72 @@
         return { overview: text.trim(), detail: "" };
       };
 
+      const renderSourceCards = (highlights = {}, activeSource, note) => {
+        sourceGridEl.innerHTML = "";
+
+        const addLine = (container, label, value, force = false) => {
+          if (!force && (value === undefined || value === null || value === "")) {
+            return false;
+          }
+
+          const line = document.createElement("div");
+          const tag = document.createElement("span");
+          tag.textContent = label;
+          line.appendChild(tag);
+          line.append(value || "");
+          container.appendChild(line);
+          return true;
+        };
+
+        SOURCE_CARDS.forEach(({ key, label, helper }) => {
+          const payload = highlights[key] || {};
+          const isActive = key === activeSource;
+          const available = Boolean(payload.available);
+          const statusText = available ? (isActive ? "Working + selected" : "Working") : "No match";
+          const statusClass = available ? (isActive ? "ok selected" : "ok") : "off";
+
+          const card = document.createElement("article");
+          card.className = "source-card";
+
+          const status = document.createElement("div");
+          status.className = `source-status ${statusClass}`;
+          status.textContent = statusText;
+
+          const title = document.createElement("h3");
+          title.textContent = label;
+
+          const lines = document.createElement("div");
+          lines.className = "source-lines";
+
+          const added = [
+            addLine(lines, "Producer", payload.producer),
+            addLine(lines, "Region", payload.region),
+            addLine(lines, "Wine type", payload.wine_type),
+            addLine(lines, "Model", payload.model),
+            addLine(lines, "Excerpt", payload.summary_excerpt),
+            addLine(lines, "Wine count", payload.wine_count),
+            addLine(lines, "Configured", payload.configured),
+          ].some(Boolean);
+
+          if (!added) {
+            addLine(lines, "Details", "No fields returned.", true);
+          }
+
+          const helperText = document.createElement("div");
+          helperText.className = "hint";
+          helperText.textContent = helper;
+
+          card.append(status, title, lines, helperText);
+          sourceGridEl.appendChild(card);
+        });
+
+        if (note) {
+          sourceSummaryEl.textContent = note;
+        } else {
+          sourceSummaryEl.textContent = "Source check complete.";
+        }
+      };
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
@@ -401,6 +581,8 @@
         overviewEl.textContent = "Analyzing producer, region, and style.";
         detailsEl.textContent = "";
         detailsBlock.hidden = true;
+        sourceGridEl.innerHTML = "";
+        sourceSummaryEl.textContent = "Checking source coverage...";
 
         try {
           const response = await fetch(`/explain-wine?${params.toString()}`);
@@ -411,14 +593,31 @@
           }
 
           const heading = data.vintage ? `${data.wine} (${data.vintage})` : `${data.wine}`;
-          const split = splitExplanation(data.explanation || "");
+          const split = splitExplanation(data.summary || "");
 
           resultTitleEl.textContent = heading;
           resultMetaEl.textContent = data.vintage ? `Vintage ${data.vintage}` : "Non-vintage";
           overviewEl.textContent = split.overview || "No overview returned.";
 
+          const detailsSections = [];
           if (split.detail) {
-            detailsEl.textContent = split.detail;
+            detailsSections.push(split.detail);
+          }
+          if (data.description_breakdown) {
+            detailsSections.push(`Description breakdown:\n${JSON.stringify(data.description_breakdown, null, 2)}`);
+          }
+          if (data.vintage_intelligence) {
+            detailsSections.push(`Vintage intelligence:\n${JSON.stringify(data.vintage_intelligence, null, 2)}`);
+          }
+          if (data.growing_season_weather) {
+            detailsSections.push(`Growing season weather:\n${JSON.stringify(data.growing_season_weather, null, 2)}`);
+          }
+          if (data.uncertainty_notes && data.uncertainty_notes.length) {
+            detailsSections.push(`Uncertainty notes:\n${data.uncertainty_notes.join("\n")}`);
+          }
+
+          if (detailsSections.length) {
+            detailsEl.textContent = detailsSections.join("\n\n");
             detailsBlock.hidden = false;
             detailsBlock.open = false;
           } else {
@@ -426,6 +625,7 @@
             detailsBlock.hidden = true;
           }
 
+          renderSourceCards(data.source_highlights, data.data_source, data.data_source_note);
           statusEl.textContent = "Overview ready.";
         } catch (error) {
           statusEl.textContent = error.message;
@@ -435,10 +635,37 @@
           overviewEl.textContent = "Could not retrieve wine details.";
           detailsEl.textContent = "";
           detailsBlock.hidden = true;
+          sourceGridEl.innerHTML = "";
+          sourceSummaryEl.textContent = "Source check failed.";
         } finally {
           submitBtn.disabled = false;
         }
       });
+
+      const loadSourceHealth = async () => {
+        try {
+          const response = await fetch("/sources/health");
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || "Health check failed");
+          }
+
+          const mapped = {};
+          Object.entries(data.sources || {}).forEach(([key, payload]) => {
+            mapped[key] = {
+              available: payload.configured,
+              configured: payload.configured ? "Yes" : "No",
+              wine_count: payload.wine_count,
+            };
+          });
+
+          renderSourceCards(mapped, null, "Baseline source configuration loaded.");
+        } catch (error) {
+          renderSourceCards({}, null, "Submit a query to validate sources.");
+        }
+      };
+
+      loadSourceHealth();
     </script>
   </body>
 </html>
