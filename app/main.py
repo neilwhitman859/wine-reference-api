@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import json
 import os
 import re
+import subprocess
 from urllib import parse, request
 
 from fastapi import FastAPI, HTTPException
@@ -12,6 +13,9 @@ from openai import OpenAI
 
 app = FastAPI()
 BASE_DIR = Path(__file__).resolve().parent
+CMS_DIR = BASE_DIR.parent / "cms"
+CMS_WINES_DIR = CMS_DIR / "wines"
+XWINES_CLONE_DIR = CMS_DIR / "sources" / "x-wines"
 
 
 @app.get("/")
@@ -58,10 +62,14 @@ def _extract_json_payload(text: str) -> dict[str, Any]:
 @app.get("/explain-wine")
 def explain_wine(name: str, vintage: Optional[int] = None):
     parsed_name, parsed_vintage = _normalize_wine_query(name=name, vintage=vintage)
+    cms_payload = _fetch_git_cms_wine_data(parsed_name, parsed_vintage)
     winevybe_payload = _fetch_winevybe_wine_data(parsed_name, parsed_vintage)
     vinou_payload = _fetch_vinou_wine_data(parsed_name, parsed_vintage)
 
-    if winevybe_payload:
+    if cms_payload:
+        source = "git_cms"
+        structured = _normalize_git_cms_payload(cms_payload)
+    elif winevybe_payload:
         source = "winevybe"
         structured = _normalize_winevybe_payload(winevybe_payload)
     elif vinou_payload:
@@ -86,6 +94,9 @@ def explain_wine(name: str, vintage: Optional[int] = None):
         "uncertainty_notes": structured.get("uncertainty_notes", []),
         "data_source": source,
         "data_source_note": (
+            "Core wine details were sourced from the local Git-based CMS."
+            if source == "git_cms"
+            else
             "Core wine details were sourced from WineVybe API."
             if source == "winevybe"
             else
@@ -96,10 +107,87 @@ def explain_wine(name: str, vintage: Optional[int] = None):
         "source_highlights": _build_source_highlights(
             winevybe_payload=winevybe_payload,
             vinou_payload=vinou_payload,
+            cms_payload=cms_payload,
             source=source,
             structured=structured,
         ),
         "raw_openai_payload": structured,
+    }
+
+
+@app.get("/cms/wines")
+def list_cms_wines():
+    CMS_WINES_DIR.mkdir(parents=True, exist_ok=True)
+    wines: list[dict[str, Any]] = []
+    for item in sorted(CMS_WINES_DIR.glob("*.json")):
+        payload = _load_json_file(item)
+        if payload:
+            wines.append(payload)
+    return {"count": len(wines), "wines": wines}
+
+
+@app.get("/cms/wines/{slug}")
+def get_cms_wine(slug: str):
+    payload = _load_json_file(_cms_wine_path(slug))
+    if not payload:
+        raise HTTPException(status_code=404, detail="Wine entry not found in CMS.")
+    return payload
+
+
+@app.put("/cms/wines/{slug}")
+def upsert_cms_wine(slug: str, payload: dict[str, Any]):
+    normalized = _normalize_cms_document(payload)
+    normalized["slug"] = slug
+    _write_cms_wine(slug, normalized)
+    return {"status": "saved", "slug": slug, "wine": normalized}
+
+
+@app.post("/cms/import/x-wines")
+def import_x_wines(limit: int = 500):
+    repo_url = "https://github.com/rogerioxavier/X-Wines.git"
+    imported = _import_x_wines_dataset(repo_url=repo_url, limit=limit)
+    return {
+        "status": "ok",
+        "source": repo_url,
+        "imported": imported,
+    }
+
+
+def _normalize_git_cms_payload(payload: Optional[dict[str, Any]]) -> dict[str, Any]:
+    if not payload:
+        return {}
+
+    tasting = payload.get("tasting_profile") or {}
+    drinking = payload.get("drinking_experience") or {}
+    return {
+        "wine_name": payload.get("wine_name") or payload.get("name"),
+        "requested_vintage": payload.get("vintage"),
+        "summary": payload.get("summary") or "Git CMS entry with no summary.",
+        "description_breakdown": {
+            "producer_and_region": f"{payload.get('producer') or 'Not disclosed'}, {payload.get('region') or 'Not disclosed'}",
+            "grape_composition_and_style": payload.get("grape_composition") or payload.get("grapes") or "Not disclosed",
+            "tasting_profile": {
+                "aroma": tasting.get("aroma") or payload.get("aroma_notes") or [],
+                "palate": tasting.get("palate") or payload.get("palate_notes") or [],
+                "finish": tasting.get("finish") or payload.get("finish") or "Not specified",
+            },
+            "drinking_experience": {
+                "body": drinking.get("body") or payload.get("body") or "Not specified",
+                "acidity": drinking.get("acidity") or payload.get("acidity") or "Not specified",
+                "tannin": drinking.get("tannin") or payload.get("tannin") or "Not specified",
+                "alcohol_impression": drinking.get("alcohol_impression") or "Not specified",
+                "serving_guidance": drinking.get("serving_guidance") or payload.get("serving") or "Not specified",
+                "food_pairings": drinking.get("food_pairings") or payload.get("food_pairings") or [],
+                "cellaring_window": drinking.get("cellaring_window") or payload.get("cellaring") or "Not specified",
+            },
+        },
+        "vintage_intelligence": payload.get("vintage_intelligence") or {},
+        "climate_context": payload.get("climate_context") or {},
+        "uncertainty_notes": payload.get("uncertainty_notes") or [],
+        "wine_type": payload.get("wine_type"),
+        "abv": payload.get("abv"),
+        "availability_status": payload.get("availability_status"),
+        "comparable_wines": payload.get("comparable_wines"),
     }
 
 
@@ -196,6 +284,159 @@ Use this exact JSON shape:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI call failed: {repr(e)}")
+
+
+def _cms_wine_path(slug: str) -> Path:
+    return CMS_WINES_DIR / f"{slug}.json"
+
+
+def _slugify(value: str) -> str:
+    lowered = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return lowered or "wine"
+
+
+def _load_json_file(path: Path) -> Optional[dict[str, Any]]:
+    if not path.exists():
+        return None
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except Exception:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _write_cms_wine(slug: str, payload: dict[str, Any]) -> None:
+    CMS_WINES_DIR.mkdir(parents=True, exist_ok=True)
+    with _cms_wine_path(slug).open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False, indent=2)
+
+
+def _normalize_cms_document(payload: dict[str, Any]) -> dict[str, Any]:
+    now = datetime.now(timezone.utc).isoformat()
+    normalized = dict(payload)
+    normalized.setdefault("name", payload.get("wine_name") or "Unknown wine")
+    normalized.setdefault("wine_name", normalized["name"])
+    normalized.setdefault("summary", "No summary yet.")
+    normalized["updated_at"] = now
+    normalized.setdefault("created_at", now)
+    return normalized
+
+
+def _fetch_git_cms_wine_data(name: str, vintage: Optional[int]) -> Optional[dict[str, Any]]:
+    CMS_WINES_DIR.mkdir(parents=True, exist_ok=True)
+    requested_slug = _slugify(name)
+    payload = _load_json_file(_cms_wine_path(requested_slug))
+    if payload and _matches_vintage(payload, vintage):
+        return payload
+
+    for item in CMS_WINES_DIR.glob("*.json"):
+        candidate = _load_json_file(item)
+        if not candidate:
+            continue
+        candidate_name = str(candidate.get("name") or candidate.get("wine_name") or "").strip().lower()
+        if candidate_name == name.strip().lower() and _matches_vintage(candidate, vintage):
+            return candidate
+    return None
+
+
+def _matches_vintage(payload: dict[str, Any], requested: Optional[int]) -> bool:
+    if requested is None:
+        return True
+    try:
+        return int(payload.get("vintage")) == requested
+    except (TypeError, ValueError):
+        return False
+
+
+def _import_x_wines_dataset(repo_url: str, limit: int) -> int:
+    CMS_WINES_DIR.mkdir(parents=True, exist_ok=True)
+    XWINES_CLONE_DIR.parent.mkdir(parents=True, exist_ok=True)
+    if XWINES_CLONE_DIR.exists():
+        subprocess.run(["git", "-C", str(XWINES_CLONE_DIR), "pull", "--ff-only"], check=False)
+    else:
+        subprocess.run(["git", "clone", "--depth", "1", repo_url, str(XWINES_CLONE_DIR)], check=False)
+
+    dataset_file = _find_x_wines_dataset_file(XWINES_CLONE_DIR)
+    if not dataset_file:
+        raise HTTPException(status_code=502, detail="X-Wines repository cloned but no supported dataset file was found.")
+
+    records = _load_x_wines_records(dataset_file)
+    imported = 0
+    for record in records:
+        if imported >= max(1, limit):
+            break
+        mapped = _map_x_wines_record(record)
+        if not mapped:
+            continue
+        slug = _slugify(f"{mapped.get('name', 'wine')}-{mapped.get('vintage') or 'nv'}")
+        existing = _load_json_file(_cms_wine_path(slug)) or {}
+        merged = _normalize_cms_document({**existing, **mapped, "source": "x-wines"})
+        merged["slug"] = slug
+        _write_cms_wine(slug, merged)
+        imported += 1
+    return imported
+
+
+def _find_x_wines_dataset_file(repo_dir: Path) -> Optional[Path]:
+    candidates = [
+        *repo_dir.glob("*.json"),
+        *repo_dir.glob("*.csv"),
+        *repo_dir.glob("data/*.json"),
+        *repo_dir.glob("data/*.csv"),
+        *repo_dir.glob("dataset/*.json"),
+        *repo_dir.glob("dataset/*.csv"),
+    ]
+    for file in candidates:
+        if "wine" in file.name.lower():
+            return file
+    return candidates[0] if candidates else None
+
+
+def _load_x_wines_records(dataset_file: Path) -> list[dict[str, Any]]:
+    suffix = dataset_file.suffix.lower()
+    if suffix == ".json":
+        with dataset_file.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        if isinstance(payload, list):
+            return [item for item in payload if isinstance(item, dict)]
+        if isinstance(payload, dict):
+            if isinstance(payload.get("data"), list):
+                return [item for item in payload["data"] if isinstance(item, dict)]
+            return [payload]
+        return []
+
+    if suffix == ".csv":
+        lines = dataset_file.read_text(encoding="utf-8").splitlines()
+        if not lines:
+            return []
+        headers = [part.strip() for part in lines[0].split(",")]
+        rows: list[dict[str, Any]] = []
+        for line in lines[1:]:
+            values = [part.strip() for part in line.split(",")]
+            if len(values) != len(headers):
+                continue
+            rows.append({headers[idx]: values[idx] for idx in range(len(headers))})
+        return rows
+
+    return []
+
+
+def _map_x_wines_record(record: dict[str, Any]) -> Optional[dict[str, Any]]:
+    name = record.get("name") or record.get("wine") or record.get("wine_name")
+    if not name:
+        return None
+    return {
+        "name": str(name),
+        "wine_name": str(name),
+        "vintage": _safe_int(record.get("vintage"), 0) or None,
+        "producer": record.get("winery") or record.get("producer"),
+        "region": record.get("region") or record.get("country"),
+        "summary": record.get("description") or record.get("summary") or "Imported from X-Wines dataset.",
+        "grape_composition": record.get("grapes") or record.get("variety"),
+        "wine_type": record.get("type") or record.get("wine_type"),
+        "abv": record.get("abv") or record.get("alcohol"),
+    }
 
 
 def _fetch_vinou_wine_data(name: str, vintage: Optional[int]) -> Optional[dict[str, Any]]:
@@ -308,10 +549,17 @@ def _normalize_winevybe_payload(winevybe_payload: Optional[dict[str, Any]]) -> d
 def _build_source_highlights(
     winevybe_payload: Optional[dict[str, Any]],
     vinou_payload: Optional[dict[str, Any]],
+    cms_payload: Optional[dict[str, Any]],
     source: str,
     structured: dict[str, Any],
 ) -> dict[str, Any]:
     return {
+        "git_cms": {
+            "available": bool(cms_payload),
+            "producer": (cms_payload or {}).get("producer"),
+            "region": (cms_payload or {}).get("region"),
+            "wine_type": (cms_payload or {}).get("wine_type"),
+        },
         "winevybe": {
             "available": bool(winevybe_payload),
             "producer": (winevybe_payload or {}).get("producer") or (winevybe_payload or {}).get("winery"),

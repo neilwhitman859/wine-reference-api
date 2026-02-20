@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import patch
 import json
+import shutil
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -95,6 +97,15 @@ class _FakeWineVybeResponse:
 
 
 class WineQueryParsingTests(unittest.TestCase):
+    def setUp(self):
+        self.cms_dir = Path("cms")
+        if self.cms_dir.exists():
+            shutil.rmtree(self.cms_dir)
+
+    def tearDown(self):
+        if self.cms_dir.exists():
+            shutil.rmtree(self.cms_dir)
+
     @patch("app.main.OpenAI", _FakeOpenAI)
     @patch("app.main.os.getenv", side_effect=lambda key: {"OPENAI_API_KEY": "test-key"}.get(key))
     def test_tondonia_vintage_in_name_is_parsed(self, _mock_getenv):
@@ -151,6 +162,39 @@ class WineQueryParsingTests(unittest.TestCase):
         self.assertIn("Vinou", payload["data_source_note"])
         self.assertEqual(payload["summary"], "Authoritative producer data from Vinou.")
         self.assertTrue(payload["source_highlights"]["vinou"]["available"])
+
+    @patch("app.main.OpenAI", _FakeOpenAI)
+    @patch("app.main.os.getenv", side_effect=lambda key: {"OPENAI_API_KEY": "test-key"}.get(key))
+    def test_git_cms_source_is_used_before_openai(self, _mock_getenv):
+        client = TestClient(app)
+        save_response = client.put(
+            "/cms/wines/opus-one-2018",
+            json={
+                "name": "Opus One",
+                "vintage": 2018,
+                "summary": "Stored in Git CMS.",
+                "producer": "Opus One Winery",
+                "region": "Napa Valley",
+            },
+        )
+        self.assertEqual(save_response.status_code, 200)
+
+        response = client.get("/explain-wine", params={"name": "Opus One", "vintage": 2018})
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["data_source"], "git_cms")
+        self.assertIn("Git-based CMS", payload["data_source_note"])
+        self.assertEqual(payload["summary"], "Stored in Git CMS.")
+        self.assertTrue(payload["source_highlights"]["git_cms"]["available"])
+
+    @patch("app.main._import_x_wines_dataset", return_value=3)
+    def test_import_endpoint_reports_import_count(self, _mock_import):
+        client = TestClient(app)
+        response = client.post("/cms/import/x-wines", params={"limit": 3})
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["imported"], 3)
+        self.assertIn("X-Wines", payload["source"])
 
 
 if __name__ == "__main__":

@@ -9,6 +9,20 @@ For AI agent and contributor workflow, see AGENT_WORKFLOW.md
 - `GET /` — basic web UI for entering a wine and optional vintage.
 - `GET /health` — healthcheck.
 - `GET /explain-wine?name=<wine>&vintage=<optional-year>` — returns wine summary.
+- `GET /cms/wines` — lists all wine documents stored in the local Git-backed CMS folder.
+- `GET /cms/wines/{slug}` — reads a single CMS wine document.
+- `PUT /cms/wines/{slug}` — creates or updates a CMS wine document.
+- `POST /cms/import/x-wines?limit=<n>` — clones/pulls X-Wines and imports up to `n` records into CMS.
+
+## Git-based CMS workflow
+
+Wine entries are stored as JSON files in `cms/wines/*.json`. This makes the CMS Git-native:
+
+1. Add or update entries through `/cms/wines/{slug}`.
+2. Commit `cms/wines` files in this repo.
+3. Use normal Git history/review to track wine changes.
+
+The `/explain-wine` endpoint now checks this local CMS first, then WineVybe, then Vinou, then OpenAI.
 
 ## Run locally
 
