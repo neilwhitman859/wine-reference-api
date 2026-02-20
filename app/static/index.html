@@ -3,436 +3,442 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wine Reference API</title>
+    <title>Wine Reference</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;700&family=Source+Sans+3:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
-        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         color-scheme: light;
-        --bg: #f4f1f6;
-        --panel: #ffffff;
-        --ink: #241b24;
-        --muted: #665f6b;
-        --brand: #6f1d46;
-        --brand-2: #a93f74;
-        --edge: #e8dfeb;
+        --ink: #1f1714;
+        --muted: #5d4f49;
+        --accent: #8a2f3f;
+        --accent-soft: #f2d8c8;
+        --surface: #fffaf7;
+        --line: #e6d9d2;
+        --shadow: 0 24px 50px rgba(31, 23, 20, 0.12);
       }
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
         min-height: 100vh;
-        background: radial-gradient(circle at 15% -10%, #f8dce9, transparent 36%), radial-gradient(circle at 100% 0%, #e1d6f8, transparent 30%), var(--bg);
+        font-family: "Source Sans 3", "Helvetica Neue", sans-serif;
         color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 12%, rgba(225, 195, 170, 0.35), transparent 55%),
+          radial-gradient(circle at 90% 8%, rgba(138, 47, 63, 0.18), transparent 48%),
+          linear-gradient(180deg, #f6f1ec 0%, #f0e8e1 55%, #f7f4f1 100%);
       }
-      .wrap {
-        max-width: 1280px;
-        margin: 32px auto 48px;
-        padding: 0 20px;
-      }
-      .app-shell {
-        background: color-mix(in srgb, var(--panel) 88%, #ffffff);
-        border: 1px solid var(--edge);
-        border-radius: 24px;
-        padding: 30px;
-        box-shadow: 0 24px 55px rgba(53, 20, 48, 0.12);
-      }
-      h1 { margin: 0; font-size: 2rem; letter-spacing: -.02em; }
-      .lead { color: var(--muted); margin: 8px 0 22px; max-width: 80ch; line-height: 1.45; }
-      .query-grid {
+      main.page {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 48px 20px 64px;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 180px auto;
-        gap: 12px;
-        align-items: end;
+        gap: 28px;
       }
-      label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-      input {
-        width: 100%;
-        border-radius: 12px;
-        border: 1px solid #d8ccdf;
-        background: #fff;
-        padding: 11px 12px;
-        font-size: 14px;
-      }
-      input:focus-visible { outline: 2px solid #d88cb0; border-color: #d88cb0; }
-      button {
-        border: 0;
-        border-radius: 12px;
-        padding: 11px 16px;
-        color: #fff;
-        cursor: pointer;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--brand), var(--brand-2));
-        box-shadow: 0 8px 18px rgba(111, 29, 70, 0.35);
-      }
-      button:disabled { opacity: .65; cursor: wait; }
-      .status { min-height: 20px; margin-top: 12px; color: var(--muted); }
-      .error { color: #ac1e36; }
-      .history {
-        margin-top: 18px;
-        border-radius: 14px;
-        border: 1px solid var(--edge);
-        padding: 14px;
-        background: #fcfafe;
-      }
-      .history h3 { margin: 0 0 8px; font-size: 15px; }
-      .history ul { margin: 0; padding-left: 18px; color: #4d4651; }
-      .result {
-        margin-top: 18px;
-        border-radius: 18px;
-        border: 1px solid var(--edge);
-        background: linear-gradient(180deg, #fff 0%, #fef9ff 100%);
-        padding: 20px;
-        min-height: 150px;
+      .hero,
+      .panel,
+      .result-card,
+      .detail-card {
+        animation: fadeUp 0.6s ease both;
       }
       .hero {
-        display: grid;
-        gap: 18px;
-        grid-template-columns: minmax(0, 1fr) 240px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--edge);
+        background: rgba(255, 250, 247, 0.86);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 32px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(8px);
       }
-      .hero h2 { margin: 0; font-size: 1.65rem; }
-      .hero p { margin: 10px 0 0; line-height: 1.5; color: #4d4550; }
-      .chip { display: inline-block; font-size: 12px; padding: 4px 10px; border: 1px solid #e0d1e5; border-radius: 999px; margin-right: 6px; margin-top: 10px; background: #faf0f6; }
-      .source-note {
-        margin-top: 10px;
-        font-size: 13px;
-        color: #5e525f;
-      }
-      .source-highlights {
-        margin-top: 12px;
-        display: grid;
-        gap: 10px;
-      }
-      .source-card {
-        border: 1px solid #e7dbe9;
-        border-radius: 10px;
-        padding: 10px;
-        background: #fff9fd;
-      }
-      .source-card h4 {
-        margin: 0 0 6px;
-        font-size: 12px;
-        letter-spacing: 0.08em;
+      .hero .eyebrow {
         text-transform: uppercase;
-        color: #5f455c;
+        letter-spacing: 0.18em;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 10px;
       }
-      .source-card ul {
+      .hero h1 {
+        font-family: "Fraunces", "Times New Roman", serif;
+        font-size: clamp(30px, 4vw, 44px);
+        margin: 0 0 12px;
+      }
+      .hero p {
         margin: 0;
-        padding-left: 16px;
-        font-size: 13px;
+        max-width: 620px;
+        line-height: 1.6;
+        color: var(--muted);
+        font-size: 16px;
       }
-      .score {
-        border: 1px solid #e2cfe4;
-        border-radius: 16px;
-        padding: 14px;
-        background: linear-gradient(145deg, #fcf2f8, #f7f4ff);
-      }
-      .score .label { font-size: 12px; color: #6a5f6f; text-transform: uppercase; letter-spacing: .08em; }
-      .score .value { font-size: 2rem; font-weight: 800; color: var(--brand); margin-top: 4px; }
-      .section-grid {
+      .hero-meta {
+        margin-top: 22px;
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-        margin-top: 16px;
+        gap: 16px;
+      }
+      .meta-item {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px 16px;
+      }
+      .meta-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .meta-value {
+        font-size: 15px;
+        font-weight: 600;
       }
       .panel {
-        border: 1px solid var(--edge);
-        border-radius: 14px;
-        background: #fff;
-        padding: 14px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 22px;
+        box-shadow: 0 16px 32px rgba(31, 23, 20, 0.08);
       }
-      .panel h3 { margin: 0 0 10px; font-size: 1rem; }
-      .facts-grid {
+      .form-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 170px) auto;
+        gap: 16px;
+        align-items: end;
       }
-      .fact { border: 1px solid #ede4f0; background: #fdfbff; border-radius: 10px; padding: 9px; }
-      .fact .label { font-size: 12px; color: #6d6372; }
-      .fact .value { font-size: 14px; font-weight: 600; margin-top: 3px; }
-      .viz-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-      .viz-item { display: grid; gap: 6px; }
-      .viz-head { display: flex; justify-content: space-between; font-size: 13px; }
-      .meter { height: 10px; border-radius: 999px; background: #eee6f2; overflow: hidden; }
-      .meter > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #bc5b8f, #6f1d46); }
-      ul { margin: 8px 0 0; padding-left: 18px; }
-      .meta { margin-top: 10px; color: #716678; font-size: 12px; }
-      .metadata { display: none; }
-      @media (max-width: 980px) {
-        .query-grid, .hero, .section-grid, .facts-grid { grid-template-columns: 1fr; }
+      .field label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .field input {
+        width: 100%;
+        border: 1px solid #d7cac3;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 15px;
+        background: #fff;
+      }
+      .field input:focus {
+        outline: 2px solid rgba(138, 47, 63, 0.2);
+        border-color: var(--accent);
+      }
+      .hint {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .action button {
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 18px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        min-height: 46px;
+      }
+      .action button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 18px rgba(138, 47, 63, 0.22);
+      }
+      .action button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+        box-shadow: none;
+      }
+      .status-row {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .status.error {
+        color: #a11a1a;
+        font-weight: 600;
+      }
+      .results {
+        display: grid;
+        gap: 18px;
+      }
+      .result-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 22px;
+        box-shadow: 0 18px 35px rgba(31, 23, 20, 0.08);
+      }
+      .result-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+      .result-head .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .result-head h2 {
+        margin: 0;
+        font-family: "Fraunces", "Times New Roman", serif;
+        font-size: 24px;
+      }
+      .pill {
+        align-self: flex-start;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: #61323a;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .result-text {
+        white-space: pre-wrap;
+        line-height: 1.6;
+        color: #2a201d;
+        font-size: 15px;
+      }
+      .detail-card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 4px 18px 18px;
+      }
+      .detail-card summary {
+        cursor: pointer;
+        padding: 14px 0;
+        font-weight: 600;
+        list-style: none;
+      }
+      .detail-card summary::-webkit-details-marker {
+        display: none;
+      }
+      .detail-card summary::before {
+        content: "+";
+        display: inline-block;
+        margin-right: 8px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .detail-card[open] summary::before {
+        content: "-";
+      }
+      .detail-text {
+        white-space: pre-wrap;
+        line-height: 1.6;
+        color: #2a201d;
+        font-size: 14px;
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (max-width: 860px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .hero-meta {
+          grid-template-columns: 1fr;
+        }
+        .status-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .result-head {
+          flex-direction: column;
+        }
       }
     </style>
   </head>
   <body>
-    <main class="wrap">
-      <section class="app-shell">
-        <h1>Wine Reference</h1>
-        <p class="lead">Explore a wine by producer, place, and vintage with richer visuals and cleaner structure. Enter a bottle and optional year to generate a full profile.</p>
+    <main class="page">
+      <header class="hero">
+        <div class="eyebrow">Wine Reference</div>
+        <h1>Data-driven wine briefs with just enough depth.</h1>
+        <p>
+          Enter a wine name and optional vintage to generate a structured overview.
+          The expanded section keeps extra detail out of the way until you want it.
+        </p>
+        <div class="hero-meta">
+          <div class="meta-item">
+            <span class="meta-label">Focus</span>
+            <span class="meta-value">Producer, region, style</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Output</span>
+            <span class="meta-value">Overview plus expandable detail</span>
+          </div>
+        </div>
+      </header>
 
-        <form id="wine-form" class="query-grid">
-          <div>
+      <section class="panel">
+        <form id="wine-form" class="form-grid">
+          <div class="field">
             <label for="name">Wine name</label>
-            <input id="name" name="name" placeholder="e.g., Opus One" required />
+            <input id="name" name="name" placeholder="e.g., Ridge Geyserville" required />
+            <div class="hint">Try a producer and cuvee, or a winery and region.</div>
           </div>
-          <div>
+          <div class="field">
             <label for="vintage">Vintage (optional)</label>
-            <input id="vintage" name="vintage" type="number" placeholder="e.g., 2018" min="1900" max="2100" />
+            <input id="vintage" name="vintage" type="number" placeholder="e.g., 2022" min="1900" max="2100" />
+            <div class="hint">Leave blank for non-vintage wines.</div>
           </div>
-          <div><button type="submit" id="submit-btn">Generate profile</button></div>
+          <div class="field action">
+            <button type="submit" id="submit-btn">Generate overview</button>
+          </div>
         </form>
 
-        <div id="status" class="status"></div>
-        <section class="history">
-          <h3>Last 10 bottles searched</h3>
-          <ul id="search-history"></ul>
-        </section>
+        <div class="status-row">
+          <div id="status" class="status"></div>
+          <div class="updated">Updated <time id="last-updated"></time></div>
+        </div>
+      </section>
 
-        <div id="result" class="result">Your redesigned wine profile will appear here.</div>
-        <div class="meta">Last updated: <time id="last-updated"></time></div>
+      <section class="results">
+        <article class="result-card">
+          <div class="result-head">
+            <div>
+              <div class="eyebrow">Overview</div>
+              <h2 id="result-title">Awaiting a request</h2>
+            </div>
+            <div class="pill" id="result-meta">No query yet</div>
+          </div>
+          <div id="overview" class="result-text">Your wine overview will appear here.</div>
+        </article>
+
+        <details class="detail-card" id="details-block" hidden>
+          <summary>Expand for more detail</summary>
+          <div id="details" class="detail-text"></div>
+        </details>
       </section>
     </main>
 
     <script>
       const form = document.getElementById("wine-form");
       const statusEl = document.getElementById("status");
-      const resultEl = document.getElementById("result");
+      const overviewEl = document.getElementById("overview");
+      const detailsEl = document.getElementById("details");
+      const detailsBlock = document.getElementById("details-block");
       const submitBtn = document.getElementById("submit-btn");
       const lastUpdatedEl = document.getElementById("last-updated");
-      const searchHistoryEl = document.getElementById("search-history");
-      const SEARCH_HISTORY_KEY = "wine-search-history-v2";
+      const resultTitleEl = document.getElementById("result-title");
+      const resultMetaEl = document.getElementById("result-meta");
 
-      lastUpdatedEl.textContent = new Date(document.lastModified).toLocaleString();
+      const formattedUpdatedAt = new Date(document.lastModified).toLocaleString();
+      lastUpdatedEl.textContent = formattedUpdatedAt;
       lastUpdatedEl.dateTime = new Date(document.lastModified).toISOString();
 
-      const safe = (v, fallback = "Not disclosed") => (v === null || v === undefined || v === "" ? fallback : v);
-      const listItems = (items = [], empty = "Not available") =>
-        Array.isArray(items) && items.length ? items.map((i) => `<li>${i}</li>`).join("") : `<li>${empty}</li>`;
+      const splitExplanation = (text) => {
+        if (!text) {
+          return { overview: "", detail: "" };
+        }
 
-      const parseGrapes = (text = "") => {
-        const matches = [...(text || "").matchAll(/(\d{1,3})\s?%\s*([A-Za-z][A-Za-z\s\-]+)/g)];
-        if (!matches.length) return [];
-        return matches.map((m) => ({ percent: Number(m[1]), grape: m[2].trim().replace(/[.,;:]$/, "") }));
-      };
+        const paragraphs = text
+          .split(/\n\s*\n/)
+          .map((chunk) => chunk.trim())
+          .filter(Boolean);
 
-      const parseProducerRegion = (text = "") => {
-        const parts = (text || "").split(",").map((p) => p.trim()).filter(Boolean);
-        if (!parts.length) return { producer: "Not disclosed", region: "Not disclosed" };
-        return { producer: parts[0], region: parts.slice(1).join(", ") || "Not disclosed" };
-      };
+        if (paragraphs.length > 1) {
+          return {
+            overview: paragraphs[0],
+            detail: paragraphs.slice(1).join("\n\n"),
+          };
+        }
 
-      const weatherInterpretation = (comparison = {}) => {
-        const temp = comparison.avg_high_delta_c || 0;
-        const rain = comparison.rain_total_delta_mm || 0;
-        if (temp > 1.8 && rain < -25) return "Hot and dry season likely pushed ripeness and concentration.";
-        if (temp < -1.3 && rain > 25) return "Cooler and wetter season likely emphasized freshness and tension.";
-        return "Balanced weather profile, typically associated with moderate structure and style.";
-      };
+        const sentences = text.match(/[^.!?]+[.!?]+/g);
+        if (sentences && sentences.length > 2) {
+          return {
+            overview: sentences.slice(0, 2).join(" ").trim(),
+            detail: sentences.slice(2).join(" ").trim(),
+          };
+        }
 
-      const vintageRank = (comparison = {}) => {
-        const heat = Math.abs(comparison.avg_high_delta_c || 0);
-        const rain = Math.abs(comparison.rain_total_delta_mm || 0);
-        const score = Math.max(1, Math.min(5, 5 - heat * 0.9 - rain / 40));
-        return `${score.toFixed(1)}/5`;
-      };
-
-      const formatCurrency = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
-
-      const estimatePrice = (vintage, weather = {}) => {
-        const yr = new Date().getFullYear();
-        const age = vintage ? Math.max(0, yr - vintage) : 4;
-        const tempDelta = Math.abs(weather?.selected_vs_average_comparison?.avg_high_delta_c || 0);
-        const score = Math.max(0.8, 1.2 - tempDelta * 0.08);
-        const avg = Math.round(45 * (1 + Math.min(age / 18, 0.8)) * score);
-        return { avg, low: Math.max(20, Math.round(avg * 0.8)), high: Math.round(avg * 1.25) };
-      };
-
-      const loadSearchHistory = () => {
-        try {
-          const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
-          if (!raw) return [];
-          const parsed = JSON.parse(raw);
-          return Array.isArray(parsed) ? parsed : [];
-        } catch { return []; }
-      };
-
-      const saveSearchHistory = (entries) => localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(entries));
-
-      const renderSearchHistory = () => {
-        const entries = loadSearchHistory();
-        searchHistoryEl.innerHTML = entries.length
-          ? entries.map((e) => `<li><strong>${e.name}</strong> · ${e.vintage} · ${e.grapes}</li>`).join("")
-          : "<li>No bottles searched yet.</li>";
-      };
-
-      const recordSearch = (entry) => {
-        const entries = loadSearchHistory().filter((e) => !(e.name === entry.name && e.vintage === entry.vintage));
-        entries.unshift(entry);
-        saveSearchHistory(entries.slice(0, 10));
-        renderSearchHistory();
-      };
-
-      const vizRow = (label, current, avg, unit = "") => {
-        const max = Math.max(Math.abs(current || 0), Math.abs(avg || 0), 1);
-        const pct = Math.min(100, Math.max(8, (Math.abs(current || 0) / max) * 100));
-        return `
-          <li class="viz-item">
-            <div class="viz-head"><strong>${label}</strong><span>${safe(current, "N/A")}${unit} vs ${safe(avg, "N/A")}${unit}</span></div>
-            <div class="meter"><span style="width:${pct}%"></span></div>
-          </li>`;
-      };
-
-      const renderSourceHighlights = (sourceHighlights = {}) => {
-        const sections = [
-          ["WineVybe", sourceHighlights.winevybe || {}],
-          ["Vinou", sourceHighlights.vinou || {}],
-          ["OpenAI", sourceHighlights.openai || {}],
-        ];
-
-        return `
-          <div class="source-highlights">
-            ${sections.map(([name, details]) => `
-              <article class="source-card">
-                <h4>${name}</h4>
-                <ul>
-                  <li><strong>Status:</strong> ${details.available ? "Available" : "Unavailable"}</li>
-                  <li><strong>Producer:</strong> ${safe(details.producer, "Not provided")}</li>
-                  <li><strong>Region:</strong> ${safe(details.region, "Not provided")}</li>
-                  <li><strong>Wine type:</strong> ${safe(details.wine_type, "Not provided")}</li>
-                  ${name === "OpenAI" ? `<li><strong>Model:</strong> ${safe(details.model, "Not queried")}</li>` : ""}
-                </ul>
-              </article>
-            `).join("")}
-          </div>
-        `;
-      };
-
-      const renderResult = (data) => {
-        const breakdown = data.description_breakdown || {};
-        const tasting = breakdown.tasting_profile || {};
-        const mouth = breakdown.drinking_experience || {};
-        const weather = data.growing_season_weather || {};
-        const comparison = weather.selected_vs_average_comparison || {};
-        const producerRegion = parseProducerRegion(breakdown.producer_and_region || "");
-        const grapes = parseGrapes(breakdown.grape_composition_and_style || "");
-        const grapeNames = grapes.length ? grapes.map((g) => g.grape).join(", ") : "Not disclosed";
-        const blend = grapes.length ? grapes.map((g) => `${g.grape} ${g.percent}%`).join(", ") : "Optional / Not disclosed";
-        const climate = data.raw_openai_payload?.climate_context || {};
-        const growing = climate.growing_season || {};
-
-        const price = estimatePrice(data.vintage, weather);
-        recordSearch({ name: safe(data.wine, "Unknown wine"), vintage: safe(data.vintage, "N/V"), grapes: grapeNames });
-
-        return `
-          <div class="hero">
-            <div>
-              <h2>${safe(data.wine, "Wine")} ${data.vintage ? `(${data.vintage})` : ""}</h2>
-              <p>${safe(data.summary, "No summary returned.")}</p>
-              <p class="source-note"><strong>Data source:</strong> ${safe(data.data_source, "unknown").toUpperCase()} · ${safe(data.data_source_note, "")}</p>
-              ${renderSourceHighlights(data.source_highlights)}
-              <span class="chip">Open-Meteo benchmarks</span>
-              <span class="chip">Interpretive tasting layer</span>
-              ${data.data_source === "winevybe" ? '<span class="chip">WineVybe source</span>' : data.data_source === "vinou" ? '<span class="chip">Vinou source</span>' : '<span class="chip">OpenAI fallback</span>'}
-            </div>
-            <aside class="score">
-              <div class="label">Vintage climate rank</div>
-              <div class="value">${vintageRank(comparison)}</div>
-              <div>${weatherInterpretation(comparison)}</div>
-            </aside>
-          </div>
-
-          <div class="section-grid">
-            <section class="panel">
-              <h3>Wine Snapshot</h3>
-              <div class="facts-grid">
-                <div class="fact"><div class="label">Producer</div><div class="value">${safe(producerRegion.producer)}</div></div>
-                <div class="fact"><div class="label">Region</div><div class="value">${safe(producerRegion.region)}</div></div>
-                <div class="fact"><div class="label">Grapes</div><div class="value">${grapeNames}</div></div>
-                <div class="fact"><div class="label">Blend</div><div class="value">${blend}</div></div>
-                <div class="fact"><div class="label">Wine type</div><div class="value">${safe(data.raw_openai_payload?.wine_type, "Not classified")}</div></div>
-                <div class="fact"><div class="label">ABV</div><div class="value">${safe(data.raw_openai_payload?.abv)}</div></div>
-              </div>
-            </section>
-
-            <section class="panel">
-              <h3>Vintage Weather Visualized</h3>
-              <ul class="viz-list">
-                ${vizRow("Avg high", comparison.selected_avg_high_c, comparison.average_avg_high_c, "°C")}
-                ${vizRow("Peak high", comparison.selected_peak_high_c, comparison.average_peak_high_c, "°C")}
-                ${vizRow("Avg low", comparison.selected_avg_low_c, comparison.average_avg_low_c, "°C")}
-                ${vizRow("Rain total", comparison.selected_rain_total_mm, comparison.average_rain_total_mm, "mm")}
-                ${vizRow("Rainy days", comparison.selected_rain_days, comparison.average_rain_days, "")}
-              </ul>
-            </section>
-
-            <section class="panel">
-              <h3>Tasting Profile</h3>
-              <strong>Nose</strong>
-              <ul>${listItems(tasting.aroma, "No aroma descriptors returned")}</ul>
-              <strong>Palate</strong>
-              <ul>${listItems(tasting.palate, "No palate descriptors returned")}</ul>
-              <ul>
-                <li><strong>Body:</strong> ${safe(mouth.body)}</li>
-                <li><strong>Acidity:</strong> ${safe(mouth.acidity)}</li>
-                <li><strong>Tannin:</strong> ${safe(mouth.tannin)}</li>
-                <li><strong>Finish:</strong> ${safe(tasting.finish)}</li>
-              </ul>
-            </section>
-
-            <section class="panel">
-              <h3>Cellar & Market</h3>
-              <ul>
-                <li><strong>Drinking window:</strong> ${safe(mouth.cellaring_window)}</li>
-                <li><strong>Estimated price:</strong> ${formatCurrency(price.avg)} (${formatCurrency(price.low)}–${formatCurrency(price.high)})</li>
-                <li><strong>Availability:</strong> ${safe(data.raw_openai_payload?.availability_status, "Unknown")}</li>
-                <li><strong>Comparables:</strong> ${safe(data.raw_openai_payload?.comparable_wines, "Not returned")}</li>
-                <li><strong>Season window:</strong> ${safe(growing.start_month, "?")}/${safe(growing.start_day, "?")} → ${safe(growing.end_month, "?")}/${safe(growing.end_day, "?")}</li>
-              </ul>
-            </section>
-          </div>
-
-          <section class="panel metadata">
-            <h3>System Metadata</h3>
-            <ul>
-              <li>Wine ID: ${safe(data.raw_openai_payload?.wine_id, "Pending")}</li>
-              <li>Producer ID: ${safe(data.raw_openai_payload?.producer_id, "Pending")}</li>
-            </ul>
-          </section>
-        `;
+        return { overview: text.trim(), detail: "" };
       };
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
+
         const wineName = document.getElementById("name").value.trim();
         const vintageRaw = document.getElementById("vintage").value.trim();
+
         if (!wineName) {
           statusEl.textContent = "Please enter a wine name.";
           statusEl.className = "status error";
           return;
         }
-        const params = new URLSearchParams({ name: wineName });
-        if (vintageRaw) params.set("vintage", vintageRaw);
 
-        statusEl.textContent = "Loading...";
+        const params = new URLSearchParams({ name: wineName });
+        if (vintageRaw) {
+          params.set("vintage", vintageRaw);
+        }
+
+        statusEl.textContent = "Loading overview...";
         statusEl.className = "status";
         submitBtn.disabled = true;
-        resultEl.textContent = "";
+        resultTitleEl.textContent = "Gathering notes";
+        resultMetaEl.textContent = "Working";
+        overviewEl.textContent = "Analyzing producer, region, and style.";
+        detailsEl.textContent = "";
+        detailsBlock.hidden = true;
 
         try {
           const response = await fetch(`/explain-wine?${params.toString()}`);
           const data = await response.json();
-          if (!response.ok) throw new Error(data.detail || "Request failed");
-          resultEl.innerHTML = renderResult(data);
-          statusEl.textContent = "Done.";
+
+          if (!response.ok) {
+            throw new Error(data.detail || "Request failed");
+          }
+
+          const heading = data.vintage ? `${data.wine} (${data.vintage})` : `${data.wine}`;
+          const split = splitExplanation(data.explanation || "");
+
+          resultTitleEl.textContent = heading;
+          resultMetaEl.textContent = data.vintage ? `Vintage ${data.vintage}` : "Non-vintage";
+          overviewEl.textContent = split.overview || "No overview returned.";
+
+          if (split.detail) {
+            detailsEl.textContent = split.detail;
+            detailsBlock.hidden = false;
+            detailsBlock.open = false;
+          } else {
+            detailsEl.textContent = "";
+            detailsBlock.hidden = true;
+          }
+
+          statusEl.textContent = "Overview ready.";
         } catch (error) {
           statusEl.textContent = error.message;
           statusEl.className = "status error";
-          resultEl.textContent = "Could not retrieve wine details.";
+          resultTitleEl.textContent = "Request failed";
+          resultMetaEl.textContent = "Try again";
+          overviewEl.textContent = "Could not retrieve wine details.";
+          detailsEl.textContent = "";
+          detailsBlock.hidden = true;
         } finally {
           submitBtn.disabled = false;
         }
       });
-
-      renderSearchHistory();
     </script>
   </body>
 </html>
