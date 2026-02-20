@@ -98,6 +98,29 @@
         font-size: 13px;
         color: #5e525f;
       }
+      .source-highlights {
+        margin-top: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .source-card {
+        border: 1px solid #e7dbe9;
+        border-radius: 10px;
+        padding: 10px;
+        background: #fff9fd;
+      }
+      .source-card h4 {
+        margin: 0 0 6px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #5f455c;
+      }
+      .source-card ul {
+        margin: 0;
+        padding-left: 16px;
+        font-size: 13px;
+      }
       .score {
         border: 1px solid #e2cfe4;
         border-radius: 16px;
@@ -258,6 +281,31 @@
           </li>`;
       };
 
+      const renderSourceHighlights = (sourceHighlights = {}) => {
+        const sections = [
+          ["WineVybe", sourceHighlights.winevybe || {}],
+          ["Vinou", sourceHighlights.vinou || {}],
+          ["OpenAI", sourceHighlights.openai || {}],
+        ];
+
+        return `
+          <div class="source-highlights">
+            ${sections.map(([name, details]) => `
+              <article class="source-card">
+                <h4>${name}</h4>
+                <ul>
+                  <li><strong>Status:</strong> ${details.available ? "Available" : "Unavailable"}</li>
+                  <li><strong>Producer:</strong> ${safe(details.producer, "Not provided")}</li>
+                  <li><strong>Region:</strong> ${safe(details.region, "Not provided")}</li>
+                  <li><strong>Wine type:</strong> ${safe(details.wine_type, "Not provided")}</li>
+                  ${name === "OpenAI" ? `<li><strong>Model:</strong> ${safe(details.model, "Not queried")}</li>` : ""}
+                </ul>
+              </article>
+            `).join("")}
+          </div>
+        `;
+      };
+
       const renderResult = (data) => {
         const breakdown = data.description_breakdown || {};
         const tasting = breakdown.tasting_profile || {};
@@ -280,9 +328,10 @@
               <h2>${safe(data.wine, "Wine")} ${data.vintage ? `(${data.vintage})` : ""}</h2>
               <p>${safe(data.summary, "No summary returned.")}</p>
               <p class="source-note"><strong>Data source:</strong> ${safe(data.data_source, "unknown").toUpperCase()} · ${safe(data.data_source_note, "")}</p>
+              ${renderSourceHighlights(data.source_highlights)}
               <span class="chip">Open-Meteo benchmarks</span>
               <span class="chip">Interpretive tasting layer</span>
-              ${data.data_source === "vinou" ? '<span class="chip">Vinou source</span>' : '<span class="chip">OpenAI fallback</span>'}
+              ${data.data_source === "winevybe" ? '<span class="chip">WineVybe source</span>' : data.data_source === "vinou" ? '<span class="chip">Vinou source</span>' : '<span class="chip">OpenAI fallback</span>'}
             </div>
             <aside class="score">
               <div class="label">Vintage climate rank</div>
